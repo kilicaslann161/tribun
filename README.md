@@ -763,3 +763,263 @@ npm test    # 119/119 (18 Aşama 9 testi: idempotent aktarım, iki-senkron ve
 #  5) Bağlı maç postponed → "İNCELEME GEREKLİ"; otomatik iptal yok
 #  6) Elle girilen maç liste düşer; admin sonuç girişi aynı settleFixture'ı çağırır
 ```
+
+## 📡 Spor Verisi: Sertleştirme, İzleme ve Belgelendirme (Aşama 10)
+
+Bu bölüm, SportScore entegrasyonunun (Aşama 0-9) tamamını **tek belge** altında toplar:
+mimari, ortam değişkenleri, tablolar, kimlik kuralları, zamanlayıcılar, bütçe, admin
+izleme uçları, veri tutma politikası, performans denetimi, dayanıklılık testleri ve
+güvenlik incelemesi.
+
+### Mimari
+
+```
+                ┌─────────────────────────────────────────────────┐
+                │              TARAYICI (public/)                 │
+                │  index.html · admin.html · app.js (hash-router) │
+                │  matchesBoard.js · sports.css · admin.js        │
+                └────────┬───────────────────────────▲─────────────┘
+      /api/sports/* (yalnız okuma)                  │  /api/admin/* (x-admin-key)
+      120 istek/dk · ETag + 304                     │  30 istek/dk (Aşama 10 limiti)
+                ┌────────▼───────────────────────────┴─────────────┐
+                │            EXPRESS (server/index.js)              │
+                │  routes/sports.js → sportsRead.js (SQLite okuma)  │
+                │  routes/admin.js  → izleme + manuel senkron       │
+                └────────▲──────────────────────────────────────────┘
+                         │ better-sqlite3 (WAL) — data/tribun.db
+┌────────────────────────▼──────────────────────────────────────────────────┐
+│                            SENKRON KATMANI                                 │
+│  scheduler.js      fikstür 4 faz: canlı 3sa · dün 6sa · D-2 · gelecek    │
+│  liveScoresJob.js  canlı turlar 120sn → 240sn (%70) → 600sn (%90)        │
+│  standingsJob.js   3 taban tur/gün + biten maç tetikleri                  │
+│  forecastJob.js    300sn, YALNIZ-DB (istek atmayan denetçi)               │
+│  retentionJob.js   24 saatte bir, küçük batch'lerle temizlik (Aşama 10)  │
+│                                                                           │
+│  TÜMÜ ORTAK MOTORU KULLANIR:                                              │
+│  syncFixtures.js ← matchGuard.js  (koruma kararları, SAF fonksiyonlar)    │
+│       ↑          ← matchNormalizer.js (şema doğrulama, SAF)               │
+│  sportScoreClient.js  bütçe(spend) · devre kesici · tek-uçuş · 2 yeniden  │
+└────────────┬──────────────────────────────────────────────────────────────┘
+             │ HTTPS · UA: TribunLocal/1.0 · AbortSignal.timeout
+             ▼
+       sportscore.com   — atıf: footer'da görünür "Powered by SportScore" (dofollow)
+```
+
+### Ortam değişkenleri
+
+| Değişken | Varsayılan | Açıklama |
+|---|---|---|
+| `PORT` | 3000 | Sunucu portu |
+| `JWT_SECRET` | — | JWT imza anahtarı; üretime çıkmadan UZUN ve rastgele yap |
+| `ADMIN_KEY` | — | Admin paneli anahtarı; yoksa admin uçları 503 döner |
+| `AUTH_RATE_LIMIT` | 20 | Giriş/kayıt istek limiti (15 dk pencere) |
+| `SPORTS_SYNC_ENABLED` | false | Tüm senkron işlerinin ana anahtarı |
+| `SPORTSCORE_BASE_URL` | https://sportscore.com | Sağlayıcı kök adresi |
+| `SPORTSCORE_DAILY_BUDGET` | 7000 | Günlük istek güvenlik tavanı (UTC gün) |
+| `SPORTSCORE_TIMEOUT_MS` | 10000 | Tek isteğin zaman aşımı |
+| `SPORTSCORE_DETAIL_DAILY_CAP` | 1000 | Maç detayı için ayrı günlük tavan (Aşama 8) |
+| `TRIBUN_DB_PATH` | data/tribun.db | DB yolu geçersiz kılma (testler `:memory:`; üretime dokunma) |
+
+### Tablolar ve ilişkiler
+
+- **competitions** — izlenen ligler. `is_enabled` (senkron anahtarı), `slug_status`
+  (`active` = allowlist'ten doğrulanmış · `candidate` = adminin elle eklediği aday).
+- **teams** — `name_key` kimliğiyle takımlar; `display_name` (Aşama 10) adminin atadığı
+  GÖRÜNEN ad. Okuma API'leri `COALESCE(display_name, name)` gösterir; senkron asla
+  display_name'i ezmez.
+- **matches** — normalize edilmiş maçlar; upsert koruma kuralları Aşama 3/5'te.
+- **match_details** — futbol detayı (events/lineups/stats, Aşama 8). 90 gün sonra silinir.
+- **standings** — puan durumu (Aşama 7).
+- **sync_state** — iş başına kira kilidi (`locked_until/locked_by`), son başarı,
+  art arda hata sayacı.
+- **sync_runs** — her senkron koşusu (durum, istek, görülen/yazılan/atlanan, hata, meta). 30 gün sonra silinir.
+- **api_usage** — UTC gün + uç bazında istek sayacı (bütçenin veri kaynağı).
+- **unmapped_values** — eşleşmeyen sağlayıcı değerleri: `status`, `status_text`,
+  `team_name`, `incident_type`, `stats_label`.
+- **fixtures / predictions / forecast_match_links** — Kâhin Sensin (Aşama 9).
+
+### external_id kuralları
+
+- **Futbol:** url'nin son parçası (ör. `jw2r09hk6lp0rz8`) → `UNIQUE(provider, external_id)`.
+  Ertelenirse aynı satır güncellenir (kimlik sabittir).
+- **Basketbol:** `<match_slug>@<YYYY-MM-DD UTC>` — aynı gün aynı iki takım oynarsa
+  (çift maç) iki kayıt aynı kimliğe düşer; motor İLKİNİ alır, ikincisini
+  `meta.duplicates`'a yazar (satır sayısı 1 kalır; dayanıklılık testi 12).
+
+### Takım adları: normalizasyon, alias, görünen ad
+
+1. Feed'deki ad → `name_key` (TR slugify: Ş→s, İ→i, boşluk→tire) = teams kimliği.
+2. Bilinmeyen ad ilk kez görülünce `unmapped_values('team_name')`'a yazılır ve
+   takım satırı otomatik açılır (alias mekanizması: sağlayıcı adı `teams.name`'de yaşar).
+3. Admin isterse **display_name** atar (panel → "Spor Verisi" → Takım Görünen Adları):
+   maç listesi, maç detayı VE puan durumu anında yeni adı gösterir.
+
+### Zamanlayıcılar ve istek planı
+
+| İş | Sıklık | İstek maliyeti |
+|---|---|---|
+| Fikstür (4 faz) | canlı 3sa · dün 6sa · D-2 24sa · gelecek 24sa | 27 × L istek/gün (L=11 → 297) |
+| Canlı skor | 120sn; %70 bütçede 240sn, %90'da 600sn; boştada 10 dk DB kontrolü | etkin çift × 30/saat |
+| Puan durumu | 3 taban tur/gün + biten maç sonrası ≤15 dk | 3 × F (F=9 → 27) |
+| Kâhin Sensin denetçi | 300sn | 0 (yalnız-DB) |
+| Retention (Aşama 10) | 24 saatte bir (ilk tur +15 dk) | 0 (dış istek yok) |
+
+### Bütçe ve gün sınırı
+
+- `spend(endpoint, priority)` her istek ÖNCESİ çalışır; sayaç `api_usage`'ta
+  **UTC gün** bazlı tutulur (Türkiye saatiyle gece 03:00'te devir; TR "günü"yle
+  karıştırma — paneldeki döküm de UTC günü gösterir).
+- Kademeler (günlük ETKİN limitin yüzdesi): **%70** → `low` öncelikli istekler
+  (detay, D+2..D+7) reddedilir · **%90** → yalnız `critical` (canlı skor + bugün)
+  yaşar · **%100** → hepsi durur.
+- **429** gelirse: `Retry-After`'a uyulur, devre kesici açılır ve etkin limit o
+  anki kullanımın %80'ine çekilir. Gün değişince limit tazelenir.
+
+### Aşama 10 admin uçları (hepsi `x-admin-key` ile)
+
+| Uç | İş |
+|---|---|
+| `GET /api/admin/sports/overview` | bütçe + 7 gün döküm + kilitler + retention durumu |
+| `GET /api/admin/sports/status` | (Aşama 3-9) koşular, unmapped, maç özetleri, canlı/puan işi |
+| `GET /api/admin/sports/competitions` | ligler: `is_enabled`, `slug_status`, satır sayaçları |
+| `POST /api/admin/sports/competitions` | aday lig ekle → `slug_status='candidate'`, KAPALI başlar |
+| `POST /api/admin/sports/competitions/:id` | `{is_enabled?, slug_status?}` — aç/kapat, doğrula |
+| `DELETE /api/admin/sports/competitions/:id` | ADAY ligi geri al (yalnız maç kaydı 0 olan adaylar) |
+| `GET /api/admin/sports/teams?q=` | takım listesi + feed'den eşleşmeyen adlar |
+| `POST /api/admin/sports/teams/:id/display-name` | `{displayName}` ata; boşsa temizle |
+
+Not: okuma API'leri (maç listesi, canlı, maç detayı, puan durumu, lig listesi)
+kapatılan ligleri (`is_enabled=0`) tamamen gizler — anahtar yalnız senkronu değil,
+görünürlüğü de kapatır.
+
+```bash
+KEY="x-admin-key: $ADMIN_KEY"
+
+# İzleme genel bakışı (bütçe, 7 gün dökümü, kilitler, retention)
+curl http://localhost:3000/api/admin/sports/overview -H "$KEY"
+
+# Ligleri listele + bir ligi kapat
+curl http://localhost:3000/api/admin/sports/competitions -H "$KEY"
+curl -X POST http://localhost:3000/api/admin/sports/competitions/4 \
+  -H "$KEY" -H "Content-Type: application/json" -d '{"is_enabled": 0}'
+
+# Aday lig ekle, aç ve doğrula (üç adım)
+curl -X POST http://localhost:3000/api/admin/sports/competitions \
+  -H "$KEY" -H "Content-Type: application/json" \
+  -d '{"slug": "turkish-second-league", "sport": "football", "name": "Turkish Second League"}'
+# ... veri geldi mi bak: manuel fikstür senkronu + status ...
+curl -X POST http://localhost:3000/api/admin/sports/competitions/12 \
+  -H "$KEY" -H "Content-Type: application/json" -d '{"is_enabled": 1, "slug_status": "active"}'
+
+# Takıma görünen ad ata
+curl -X POST http://localhost:3000/api/admin/sports/teams/17/display-name \
+  -H "$KEY" -H "Content-Type: application/json" -d '{"displayName": "GS"}'
+```
+
+### Örnek SQL (izleme hile sayfası)
+
+```sql
+-- Bugünün koşuları: durum, istek, kayıt sayaçları
+SELECT job_name, status, requests_made, records_seen, records_upserted, records_skipped
+  FROM sync_runs WHERE started_at >= date('now') ORDER BY id DESC;
+
+-- 7 günlük istek dökümü (UTC gün)
+SELECT day_utc, SUM(count) AS toplam FROM api_usage
+ WHERE day_utc >= date('now', '-6 days') GROUP BY day_utc ORDER BY day_utc DESC;
+
+-- Kilitli kalan işler (kira süresi geçmemiş)
+SELECT job_name, locked_by, locked_until FROM sync_state
+ WHERE locked_until > datetime('now');
+
+-- Eşleşmeyen değerlerin özeti
+SELECT kind, COUNT(*) AS cesit, SUM(hits) AS hit FROM unmapped_values GROUP BY kind;
+
+-- Retention ne silecek? (30/90 gün kesimleri)
+SELECT COUNT(*) FROM sync_runs WHERE started_at < datetime('now', '-30 days');
+SELECT COUNT(*) FROM match_details WHERE fetched_at < datetime('now', '-90 days');
+```
+
+### Veri tutma politikası (retention)
+
+- `sync_runs` **30 günden** eski koşular silinir; `match_details` **90 günden**
+  eski kayıtlar silinir. `matches`, `teams`, `standings` **ASLA silinmez**.
+- Günlük bir kez (ilk tur: açılış + 15 dk), her turda en fazla 500 satır silinir ve
+  parçalar arasında `setImmediate` ile event loop'a nefes verilir.
+- Silme indeksli: `idx_sync_runs_started`, `idx_match_details_fetched` (migration 008).
+- Durum izleme: `/api/admin/sports/overview` → `retention` bloğu (son tur, sıradaki tur).
+
+### Performans denetimi (EXPLAIN QUERY PLAN)
+
+`node scripts/asama10-explain-audit.js` 15 sıcak sorgunun planını yazar. Sonuç
+(24.10.2026, gerçek DB): **kalabalık tablolarda tam tarama YOK** — maç panosu
+(gün+branş, lig+gün), canlı liste, upsert kimlik aramaları, puan durumu, detay,
+iş bazlı koşular, retention taramaları ve Kâhin Sensin aday sorgusu hepsi
+`SEARCH ... USING (COVERING) INDEX`. Migration 008'le eklenenler:
+`idx_sync_runs_job_id`, `idx_sync_runs_started`, `idx_match_details_fetched`.
+(Tek "SCAN" admin lig listesindeki `competitions` tablosundadır: 11 satır.)
+
+### Dayanıklılık testleri (12 senaryo)
+
+`node --test server/tests/resilience.test.js` — bütçe 100'e sabitlenmiş
+bellek-içi DB + `global.fetch` mock'u ile GERÇEK modüller sınanır:
+
+1. Ağ hatası → 2 yeniden deneme, koşu `failed`, veri sabit
+2. Bozuk JSON → yeniden deneme yok, ham gövde sızmaz
+3. `count=0` GEÇERLİ (başarı) vs 5xx FAILED — ikisi karışmaz
+4. 429 → devre kesici + etkin limit %80'e; sonraki istek ağa çıkmaz
+5. Şema değişikliği → geçersiz kayıt atlanır, koşu çökmez
+6. Skor metni `'3'` → `3`; çöp skor → kayıt reddi
+7. Süreç çökmesi → kira düştükten sonra tur kendini kurtarır; stop çağrıları güvenli
+8. Eşzamanlı ikinci senkron → kira kilidi `skipped` + 0 istek
+9. Bütçe %70 `low` red · %90 yalnız `critical` · %100 tam dur
+10. Gün sınırı: dünkü istekler bugüne karışmaz; limit günle tazelenir
+11. DB kilidi: ikinci yazmacı `SQLITE_BUSY`'yi kısa zaman aşımıyla alır
+12. Basketbol aynı gün aynı takımlar → İLK kayıt kazanır, tekrarı loglanır
+
+(+ bonus: retention 30/90 gün kesimlerini ve taze kayıtların kaldığını doğrular.)
+
+### Güvenlik incelemesi (7 madde)
+
+1. **Girdi doğrulama:** tüm rotalarda; Türkçe 400 mesajları; slug regex, gün
+   doğrulaması (gerçek takvim günü), 0-99 skor sınırları, 8 gün tavanı.
+2. **Hız limitleri:** genel 1500/15dk · auth 20/15dk · oyun 60/dk · spor 120/dk ·
+   detay 30/dk · **admin 30/dk (Aşama 10 eklendi)**.
+3. **Hata mesajları:** istemciye iç ayrıntı yok (genel 500); sağlayıcı ham gövdesi
+   loglara/kullanıcıya sızmaz (test 2 kanıtlı).
+4. **Admin rotası:** `x-admin-key` + `crypto.timingSafeEqual`; `ADMIN_KEY` yoksa
+   503; anahtar yalnız bellekte (localStorage'a asla yazılmaz).
+5. **Loglarda sır yok:** JWT_SECRET/ADMIN_KEY/token hiçbir yere loglanmaz; admin
+   işlemleri eylemi loglar, anahtarı loglamaz.
+6. **textContent:** admin paneli ve maç panosunda TÜM dinamik metinler
+   `textContent` ile basılır; `innerHTML` yalnız statik iskelette.
+7. **Parametreli SQL:** her yerde `db.prepare(?)`; dinamik tablo adı yalnız sabit
+   sözlükten (`CONTENT_TABLES`); LIKE aramalarında joker kaçışı.
+
+### Atıf
+
+Footer (tüm sayfalarda): **"Powered by SportScore"** — `rel="dofollow noopener"`,
+görünür metin, `https://sportscore.com/` (Aşama 0 kuralı, değiştirilmez).
+
+### Sorun giderme
+
+| Belirti | Neden ve çözüm |
+|---|---|
+| Maç listesi boş | Senkron kapalı (`SPORTS_SYNC_ENABLED`) ya da henüz koşmadı → admin panelinden manuel fikstür senkronu; `sync_runs`'a bak |
+| `meta.stale: fixture_sync_old` | Son başarılı senkron 6+ saat önce → işin turlarını `/api/admin/sports/status`'tan denetle |
+| `meta.stale: live_sync_old` | Canlı maç var ama son canlı tur 5+ dk önce → canlı işin durumuna bak; bütçe %90+ olabilir |
+| 429/devre kesici | `overview`'da etkin limit düşük görünür → gün değişince kendiliğinden tazelenir; acilse bütçeyi artır |
+| Kilit sıkıştı | 10 dk içinde kira kendiliğinden düşer; acilse `sync_state.locked_until`'ı geçmişe çek |
+| Yeni takım adları `unmapped_values`'ta | Normaldir: ilk senkronda satır açılır; isterse görünen ad atanır |
+
+### Yayına alma notları
+
+- `.env`'de UZUN rastgele `JWT_SECRET` ve `ADMIN_KEY`; `.env` ASLA commit'lenmez.
+- Üretimde örnek kullanıcı istenmiyorsa `npm run seed` ÇALIŞTIRMA.
+- SQLite tek dosya: düzenli yedek için `npm run db:backup` (VACUUM INTO — tutarlı kopya,
+  sunucu açıkken güvenli).
+- Reverse proxy (Caddy/nginx) arkasında `trust proxy` zaten 1; IP bazlı limitler gerçek
+  istemci IP'sini görür.
+- Retention ilk turu açılıştan 15 dakika sonradır; sessiz saatlerde çalışır.
+- Sağlayıcı tarafı değişirse (yeni durum/olay türleri) `unmapped_values` büyür —
+  panelde görür, eşleme tablolarını (`matchNormalizer` sabitleri) güncellersin.
+

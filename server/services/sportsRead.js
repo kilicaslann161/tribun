@@ -208,13 +208,13 @@ const MATCH_SELECT = `
          m.home_score, m.away_score, m.kickoff_utc, m.updated_at,
          c.slug AS comp_slug, c.name AS comp_name, c.country AS comp_country,
          c.logo_url AS comp_logo, c.sort_order AS comp_sort,
-         th.name AS home_name, th.logo_url AS home_logo,
-         ta.name AS away_name, ta.logo_url AS away_logo
+         COALESCE(th.display_name, th.name) AS home_name, th.logo_url AS home_logo,
+         COALESCE(ta.display_name, ta.name) AS away_name, ta.logo_url AS away_logo
     FROM matches m
     JOIN competitions c ON c.id = m.competition_id
     LEFT JOIN teams th ON th.id = m.home_team_id
     LEFT JOIN teams ta ON ta.id = m.away_team_id
-   WHERE m.feed_missing = 0`;
+   WHERE m.feed_missing = 0 AND c.is_enabled = 1`; // AŞAMA 10: kapatılan lig MAÇ LİSTESİNDE de gizlenir
 
 function queryMatches(db, { rangeStart, rangeEnd, sport, competition, statuses }) {
   const where = [];
@@ -354,12 +354,14 @@ const STANDINGS_COLUMN_KEYS = [
 const STANDINGS_STALE_MS = 12 * 3600 * 1000; // taban tur 8 saat; 12 saat = 1+ tur kaçmış
 
 const standingsRowSelect = `
-  SELECT group_name, position, team_id, team_name, team_logo,
-         played, won, drawn, lost, goals_for, goals_against, goal_diff,
-         points, win_pct, promo_color, promo_name, updated_at
-    FROM standings
-   WHERE competition_id = ?
-   ORDER BY id
+  SELECT s.group_name, s.position, s.team_id,
+         COALESCE(t.display_name, s.team_name) AS team_name, s.team_logo,
+         s.played, s.won, s.drawn, s.lost, s.goals_for, s.goals_against, s.goal_diff,
+         s.points, s.win_pct, s.promo_color, s.promo_name, s.updated_at
+    FROM standings s
+    LEFT JOIN teams t ON t.id = s.team_id
+   WHERE s.competition_id = ?
+   ORDER BY s.id
 `;
 
 /**

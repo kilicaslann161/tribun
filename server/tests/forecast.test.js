@@ -28,6 +28,7 @@ const assert = require('node:assert');
 const migration001 = require('../migrations/001_sports_tables');
 const migration003 = require('../migrations/003_fixture_sync_columns');
 const migration007 = require('../migrations/007_forecast_kahin_sensin');
+const migration008 = require('../migrations/008_asama10_monitoring'); // display_name (okuma sorguları)
 const forecast = require('../services/forecastCore');
 
 /* ---------------- kurulum ---------------- */
@@ -40,6 +41,7 @@ function freshDb(t) {
   migration001.up(db);
   migration003.up(db);
   migration007.up(db);
+  migration008.up(db);
   // users + scores: db.js şemasının gerekli kısmı (predictions FK'ı ve ödül
   // geri alma yolu için; ödül stub'ı scores'a yazar)
   db.exec(`

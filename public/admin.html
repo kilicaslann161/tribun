@@ -52,6 +52,7 @@
         <button type="button" class="tab" data-tab="content">🕓 Son Eklenenler</button>
         <button type="button" class="tab" data-tab="rooms">🏟️ Bingo Odaları</button>
         <button type="button" class="tab" data-tab="matches">⚽ Maçlar</button>
+        <button type="button" class="tab" data-tab="sports">📡 Spor Verisi</button>
       </div>
 
       <section class="card" id="tab-stats">
@@ -94,6 +95,55 @@
         <h3 class="mt">📋 Kâhin Sensin Maçları</h3>
         <p class="muted">Kırmızı “İNCELEME GEREKLİ” etiketi: bağlı senkron maçı ertelenmiş/iptal edilmiş, veri akışından düşmüş ya da saati değişmiş demektir. Otomatik iptal yapılmaz — saat güncelleyebilir, iptal edebilir ya da incelemeyi kapatabilirsin.</p>
         <div id="forecastFixtures"><div class="empty">Yüklenıyor…</div></div>
+      </section>
+      <section class="card" id="tab-sports" hidden>
+        <p class="muted" style="margin-top:0">AŞAMA 10 izleme merkezi: SportScore bütçesi, senkron işlerinin kilidi ve son koşuları,
+        eşleşmeyen sağlayıcı değerleri, lig anahtarları (aday/aktif), takımlara görünür ad atama,
+        veri tutma (retention) durumu ve tek tıkla manuel senkron. Tüm sayılar yalnızca
+        veritabanından okunur — buradan bir istek açmak bile bütçe harcamaz.</p>
+
+        <div id="sportsOverview"><div class="empty">Yükleniyor…</div></div>
+
+        <h3 class="mt">🔄 Manuel Senkron</h3>
+        <div class="row">
+          <button type="button" class="btn small" id="syncFixturesBtn">📅 Fikstür (bugün+yarın)</button>
+          <button type="button" class="btn small" id="syncLiveBtn">🔴 Canlı Tur</button>
+          <button type="button" class="btn small" id="syncStandingsBtn">🥇 Puan Durumu</button>
+          <span class="muted tiny">Arka planda başlar; kira kilidi çift koşuyu engeller. Sonuç aşağıdaki koşu listesinde.</span>
+        </div>
+
+        <h3 class="mt">📋 Son Senkron Koşuları</h3>
+        <div id="syncRunsBox"><div class="empty">Yükleniyor…</div></div>
+
+        <h3 class="mt">❓ Eşleşmeyen Sağlayıcı Değerleri</h3>
+        <p class="muted">SportScore'dan gelen ama eşleme tablolarında tanımsız kalan değerler (durum, olay türü,
+        istatistik etiketi, takım adı). Yeni takım adları normaldir: ilk senkronda eklenirler.</p>
+        <div id="unmappedBox"><div class="empty">Yükleniyor…</div></div>
+
+        <h3 class="mt">🏆 Ligler</h3>
+        <div id="competitionsBox"><div class="empty">Yükleniyor…</div></div>
+        <h4>➕ Aday Lig Ekle</h4>
+        <p class="muted">Slug'ı <code>docs/sportscore-discovery.md</code> biçiminde gir (ör. <code>turkish-second-league</code>).
+        Aday ligler KAPALI başlar: önce senkron tetikleyip verinin geldiğini gör, sonra aç ve "Doğrula" ile aktifleştir.</p>
+        <div class="row">
+          <input class="input" id="ncSlug" placeholder="slug (a-z, 0-9, tire)" maxlength="100" style="flex:1;min-width:150px">
+          <input class="input" id="ncName" placeholder="Görünen ad" maxlength="60" style="flex:1;min-width:150px">
+          <select class="input" id="ncSport" style="flex:0;min-width:130px">
+            <option value="football">Futbol</option>
+            <option value="basketball">Basketbol</option>
+          </select>
+          <button type="button" class="btn" id="ncAdd">Ekle</button>
+        </div>
+
+        <h3 class="mt">👕 Takım Görünen Adları</h3>
+        <p class="muted">Sağlayıcıdan gelen adları (ör. uzun resmî adlar) tribünde görünen kısa ada çevir.
+        Boşaltıp kaydedersen feed adına döner. Okuma API'leri anında yeni adı gösterir.</p>
+        <div class="row">
+          <input class="input" id="teamSearch" placeholder="Takım ara (ad veya görünen ad)…" maxlength="60" style="flex:1;min-width:180px">
+          <button type="button" class="btn small" id="teamSearchBtn">Ara</button>
+        </div>
+        <div id="unmappedTeamsBox"></div>
+        <div id="teamsBox" style="margin-top:10px"><div class="empty">Yükleniyor…</div></div>
       </section>
     </section>
   </main>

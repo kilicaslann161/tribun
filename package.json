@@ -10,7 +10,7 @@
     "db:reset": "node server/db.js --reset",
     "db:backup": "node server/migrations/backup.js",
     "db:migrate": "node server/migrations/run.js",
-    "test": "node --test server/tests/matchNormalizer.test.js server/tests/sportsRead.test.js server/tests/syncLive.test.js server/tests/syncStandings.test.js server/tests/matchDetail.test.js server/tests/forecast.test.js"
+    "test": "node --test server/tests/matchNormalizer.test.js server/tests/sportsRead.test.js server/tests/syncLive.test.js server/tests/syncStandings.test.js server/tests/matchDetail.test.js server/tests/forecast.test.js server/tests/resilience.test.js"
   },
   "engines": {
     "node": ">=18"

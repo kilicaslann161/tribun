@@ -19,6 +19,7 @@ const Database = require('better-sqlite3');
 const migration001 = require('../migrations/001_sports_tables');
 const migration002 = require('../migrations/002_unmapped_and_meta');
 const migration003 = require('../migrations/003_fixture_sync_columns');
+const migration008 = require('../migrations/008_asama10_monitoring'); // display_name (okuma sorguları)
 const read = require('../services/sportsRead');
 
 /* ---------------- test DB kurulumu ---------------- */
@@ -32,6 +33,7 @@ function freshDb() {
   migration001.up(db);
   migration002.up(db);
   migration003.up(db);
+  migration008.up(db);
   return db;
 }
 

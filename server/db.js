@@ -8,7 +8,9 @@ const path = require('path');
 const Database = require('better-sqlite3');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
-const DB_PATH = path.join(DATA_DIR, 'tribun.db');
+// AŞAMA 10: TRIBUN_DB_PATH ile DB konumu geçersiz kılınabilir (bellek-içi testler
+// için ':memory:'). Üretimde verilmez → her zaman data/tribun.db.
+const DB_PATH = process.env.TRIBUN_DB_PATH || path.join(DATA_DIR, 'tribun.db');
 
 // Sıfırlama modu: db:reset scripti ile çağrılır
 if (process.argv.includes('--reset')) {

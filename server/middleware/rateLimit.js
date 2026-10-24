@@ -62,4 +62,15 @@ const detailLimiter = rateLimit({
   message: { error: 'Maç detay istekleri çok hızlandı. Bir dakika içinde tekrar dene.' }
 });
 
-module.exports = { generalLimiter, authLimiter, gameLimiter, contentLimiter, sportsLimiter, detailLimiter };
+/** Admin uçları (AŞAMA 10 sertleştirme): IP başına dakikada 30. Anahtar asla
+ *  localStorage'a yazılmaz; yine de anahtar denemesini (brute-force) yavaşlatmak
+ *  için /api/admin'e ek katman uygulanır — x-admin-key yanlışsa da limit dolar. */
+const adminLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Admin istekleri çok hızlandı. Bir dakika içinde tekrar dene.' }
+});
+
+module.exports = { generalLimiter, authLimiter, gameLimiter, contentLimiter, sportsLimiter, detailLimiter, adminLimiter };

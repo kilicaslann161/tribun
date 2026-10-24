@@ -29,6 +29,7 @@ const migration001 = require('../migrations/001_sports_tables');
 const migration002 = require('../migrations/002_unmapped_and_meta');
 const migration003 = require('../migrations/003_fixture_sync_columns');
 const migration006 = require('../migrations/006_match_detail');
+const migration008 = require('../migrations/008_asama10_monitoring'); // display_name (okuma sorguları)
 const core = require('../services/matchDetailCore');
 const { getMatchDetail } = require('../services/matchDetail');
 
@@ -45,6 +46,7 @@ function freshDb(t) {
   migration002.up(db);
   migration003.up(db);
   migration006.up(db);
+  migration008.up(db);
   db.prepare(`INSERT INTO competitions
     (provider, external_id, slug, sport, name, country, sort_order, is_enabled, created_at, updated_at)
     VALUES ('sportscore', 'c1', 'super-lig', 'football', 'Süper Lig', 'turkey', 1, 1, ?, ?)`).run(nowStr(), nowStr());

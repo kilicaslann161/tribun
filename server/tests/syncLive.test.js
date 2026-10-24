@@ -32,6 +32,7 @@ const migration001 = require('../migrations/001_sports_tables');
 const migration002 = require('../migrations/002_unmapped_and_meta');
 const migration003 = require('../migrations/003_fixture_sync_columns');
 const migration004 = require('../migrations/004_live_scores_columns');
+const migration008 = require('../migrations/008_asama10_monitoring'); // display_name (okuma sorguları)
 const {
   intervalForBudget, getLiveWindow, getCorrectionDue, markCorrectionsSynced,
   writeIdleRun, estimateLiveRequests, CORRECTION_DELAY_MS
@@ -51,6 +52,7 @@ function freshDb(t) {
   migration002.up(db);
   migration003.up(db);
   migration004.up(db);
+  migration008.up(db);
   db.prepare(`INSERT INTO competitions
     (provider, external_id, slug, sport, name, sort_order, is_enabled, created_at, updated_at)
     VALUES ('sportscore', 'e1', 'test-lig', 'football', 'Test Lig', 1, 1, ?, ?)`).run(nowStr(), nowStr());

@@ -13,7 +13,7 @@ require('./db'); // tabloları oluşturur (ilk çalıştırmada)
 const { migrate } = require('./migrations');
 migrate();
 
-const { generalLimiter, gameLimiter, sportsLimiter } = require('./middleware/rateLimit');
+const { generalLimiter, gameLimiter, sportsLimiter, adminLimiter } = require('./middleware/rateLimit');
 
 const authRoutes = require('./routes/auth');        // /api/auth/*, /api/me
 const scoreRoutes = require('./routes/scores');     // /api/leaderboard
@@ -49,7 +49,7 @@ app.use('/api/bingo', gameLimiter, bingoRoutes); // mark ucunda 60/dk limit (pol
 app.use('/api/transfer', gameLimiter, transferRoutes);
 app.use('/api', matchesRoutes); // GET /api/matches — önbellekli widget kaynağı
 app.use('/api/sports', sportsLimiter, sportsRoutes); // Aşama 4: yalnız SQLite okuma, 120/dk
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminLimiter, adminRoutes); // AŞAMA 10: anahtar denemesini yavaşlatan ek limit
 
 // Frontend (düz HTML/CSS/JS)
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -79,15 +79,18 @@ app.listen(PORT, () => {
     const { startLiveScoresJob, stopLiveScoresJob } = require('./jobs/liveScoresJob');
     const { startStandingsJob, stopStandingsJob } = require('./jobs/standingsJob');
     const { startForecastJob, stopForecastJob } = require('./jobs/forecastJob');
+    const { startRetentionJob, stopRetentionJob } = require('./jobs/retentionJob');
     startScheduler();
     startLiveScoresJob();
     startStandingsJob();
     startForecastJob();
+    startRetentionJob();
     const shutdown = () => {
       stopScheduler();
       stopLiveScoresJob();
       stopStandingsJob();
       stopForecastJob();
+      stopRetentionJob();
       process.exit(0);
     };
     process.on('SIGINT', shutdown);

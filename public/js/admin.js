@@ -43,13 +43,14 @@ async function adminApi(path, opts = {}) {
 /* ---------------- sekmeler ---------------- */
 function switchTab(name) {
   document.querySelectorAll('#adminTabs .tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
-  ['stats', 'reports', 'content', 'rooms', 'matches'].forEach((n) => {
+  ['stats', 'reports', 'content', 'rooms', 'matches', 'sports'].forEach((n) => {
     $(`#tab-${n}`).hidden = n !== name;
   });
   if (name === 'reports') loadReports();
   if (name === 'content') loadContent();
   if (name === 'rooms') loadRooms();
   if (name === 'matches') loadMatchesTab();
+  if (name === 'sports') loadSportsTab();
 }
 
 /* ---------------- istatistikler ---------------- */
@@ -479,6 +480,355 @@ async function addManualFixture() {
   }
 }
 
+/* ---------------- Spor Verisi (AŞAMA 10) ---------------- */
+
+const JOB_TR = {
+  fixtures: '📅 Fikstür', live_scores: '🔴 Canlı Skor', standings: '🥇 Puan Durumu',
+  forecast: '🔮 Kâhin Sensin', correction: '🛠️ Düzeltme'
+};
+const RUN_TR = { success: '✅', partial: '🟡', failed: '❌', skipped: '⏭️' };
+const UNMAPPED_TR = {
+  status: 'durum', status_text: 'periyot metni', team_name: 'takım adı',
+  incident_type: 'olay türü', stats_label: 'istatistik etiketi'
+};
+const fmtShort = (iso) => (iso ? String(iso).slice(0, 16).replace('T', ' ') : '—');
+
+async function loadSportsTab() {
+  await Promise.all([loadSportsOverview(), loadSyncRuns(), loadUnmapped(), loadCompetitions(), loadTeams('')]);
+}
+
+/** Genel tablo üretici: başlıklar + satır dizisi → .table-wrap içinde */
+function buildTable(headers, rowsFn) {
+  const wrap = el('div', 'table-wrap');
+  const table = el('table');
+  const thead = el('thead');
+  const headRow = el('tr');
+  for (const h of headers) headRow.appendChild(el('th', null, h));
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+  const tbody = el('tbody');
+  rowsFn(tbody);
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  return wrap;
+}
+
+async function loadSportsOverview() {
+  const box = $('#sportsOverview');
+  box.innerHTML = '';
+  try {
+    const [ov, st] = await Promise.all([
+      adminApi('/api/admin/sports/overview'),
+      adminApi('/api/admin/sports/status')
+    ]);
+
+    /* istatistik kartları */
+    const pct = ov.today.budget ? Math.round(100 * ov.today.usedToday / ov.today.budget) : 0;
+    const grid = el('div', 'grid');
+    const cards = [
+      ['💵', `${ov.today.usedToday} / ${ov.today.effectiveLimit}`, `Bugünkü SportScore isteği (bütçe ${ov.today.budget}; ${pct}%)`],
+      ['🪙', String(ov.today.remaining), 'Kalan etkin bütçe'],
+      ['⚽', String(st.matches.total), `Maç kaydı (${st.matches.feedMissing} akışta yok)`],
+      ['🧹', ov.retention.job.last_result
+        ? `${ov.retention.job.last_result.deleted_sync_runs}+${ov.retention.job.last_result.deleted_match_details}`
+        : 'henüz', `Retention son tur · sıradaki: ${fmtShort(ov.retention.job.next_run_at)}`]
+    ];
+    for (const [emoji, big, label] of cards) {
+      const c = el('div', 'card stat');
+      c.appendChild(el('b', null, `${emoji} ${big}`));
+      c.appendChild(el('span', null, label));
+      grid.appendChild(c);
+    }
+    box.appendChild(grid);
+
+    /* işler ve kilitler */
+    box.appendChild(el('h4', null, '🔒 Senkron İşleri ve Kira Kilitleri'));
+    const jobs = ov.sync_state.length ? ov.sync_state : [];
+    box.appendChild(buildTable(['İş', 'Kilit', 'Son Başarı', 'Art Arda Hata', 'Son Hata'], (tbody) => {
+      if (!jobs.length) return tbody.appendChild(el('tr')).appendChild(el('td', 'empty', 'Kayıt yok'));
+      for (const j of jobs) {
+        const row = el('tr');
+        row.appendChild(el('td', null, JOB_TR[j.job_name] || j.job_name));
+        row.appendChild(el('td', null, j.locked ? `🔒 ${j.lock_seconds_left} sn` : 'serbest'));
+        row.appendChild(el('td', null, fmtShort(j.last_success_at)));
+        const cf = el('td', null, String(j.consecutive_failures ?? 0));
+        if ((j.consecutive_failures ?? 0) >= 2) cf.className = 'pill red';
+        row.appendChild(cf);
+        const err = el('td', null, j.last_error ? String(j.last_error).slice(0, 80) : '—');
+        row.appendChild(err);
+        tbody.appendChild(row);
+      }
+    }));
+
+    /* 7 gün döküm + bugün uç bazında */
+    const twoCols = el('div', 'row');
+    twoCols.style.alignItems = 'flex-start';
+    twoCols.style.gap = '18px';
+    twoCols.style.flexWrap = 'wrap';
+
+    const usageWrap = el('div');
+    usageWrap.style.flex = '1';
+    usageWrap.style.minWidth = '240px';
+    usageWrap.appendChild(el('h4', null, '📈 Son 7 Gün İstek Dökümü (UTC gün)'));
+    usageWrap.appendChild(buildTable(['Gün', 'İstek'], (tbody) => {
+      if (!ov.usage_7d.length) return tbody.appendChild(el('tr')).appendChild(el('td', 'empty', 'Kayıt yok'));
+      for (const u of ov.usage_7d) {
+        const row = el('tr');
+        row.appendChild(el('td', null, u.day_utc));
+        row.appendChild(el('td', null, String(u.total)));
+        tbody.appendChild(row);
+      }
+    }));
+    twoCols.appendChild(usageWrap);
+
+    const epWrap = el('div');
+    epWrap.style.flex = '1';
+    epWrap.style.minWidth = '240px';
+    epWrap.appendChild(el('h4', null, '🎯 Bugün Uç Bazında'));
+    const chips = el('div', 'chips');
+    if (!st.today.byEndpoint.length) chips.appendChild(el('span', 'chip', 'bugün istek yok'));
+    for (const e of st.today.byEndpoint) {
+      chips.appendChild(el('span', 'chip', `${e.endpoint}: ${e.count}`));
+    }
+    epWrap.appendChild(chips);
+    epWrap.appendChild(el('p', 'muted tiny', `Retention politikası: sync_runs ${ov.retention.stats.policy.sync_runs_days} gün, match_details ${ov.retention.stats.policy.match_details_days} gün. Tablo: ${ov.retention.stats.sync_runs.c} koşu · ${ov.retention.stats.match_details.c} detay · ${ov.retention.stats.api_usage.c} kullanım satırı.`));
+    twoCols.appendChild(epWrap);
+    box.appendChild(twoCols);
+  } catch (e) {
+    box.appendChild(el('div', 'empty', e.message));
+  }
+}
+
+async function loadSyncRuns() {
+  const box = $('#syncRunsBox');
+  box.innerHTML = '';
+  try {
+    const d = await adminApi('/api/admin/sports/status');
+    const runs = d.sync_runs || [];
+    if (!runs.length) {
+      box.appendChild(el('div', 'empty', 'Henüz senkron koşusu yok.'));
+      return;
+    }
+    box.appendChild(buildTable(['Zaman', 'İş', 'Durum', 'İstek', 'Görülen/Yazılan/Atlanan', 'Hata'], (tbody) => {
+      for (const r of runs) {
+        const row = el('tr');
+        row.appendChild(el('td', null, fmtShort(r.started_at)));
+        row.appendChild(el('td', null, JOB_TR[r.job_name] || r.job_name));
+        row.appendChild(el('td', null, `${RUN_TR[r.status] || ''} ${r.status}`));
+        row.appendChild(el('td', null, String(r.requests_made)));
+        row.appendChild(el('td', null, `${r.records_seen} / ${r.records_upserted} / ${r.records_skipped}`));
+        row.appendChild(el('td', null, r.error_message ? String(r.error_message).slice(0, 60) : '—'));
+        tbody.appendChild(row);
+      }
+    }));
+  } catch (e) {
+    box.appendChild(el('div', 'empty', e.message));
+  }
+}
+
+async function loadUnmapped() {
+  const box = $('#unmappedBox');
+  box.innerHTML = '';
+  try {
+    const d = await adminApi('/api/admin/sports/status');
+    const u = d.unmapped_values || {};
+    const summary = u.summary || [];
+    const recent = u.recent || [];
+    const chips = el('div', 'chips');
+    if (!summary.length) {
+      chips.appendChild(el('span', 'chip', 'Eşleşmeyen değer yok — temiz! 🎉'));
+      box.appendChild(chips);
+      return;
+    }
+    for (const s of summary) {
+      chips.appendChild(el('span', 'chip', `${UNMAPPED_TR[s.kind] || s.kind}: ${s.cesit} çeşit / ${s.toplam_hit} hit`));
+    }
+    box.appendChild(chips);
+    if (recent.length) {
+      box.appendChild(buildTable(['Tür', 'Değer', 'Branş', 'Hit', 'Son Görülme'], (tbody) => {
+        for (const r of recent) {
+          const row = el('tr');
+          row.appendChild(el('td', null, UNMAPPED_TR[r.kind] || r.kind));
+          row.appendChild(el('td', null, String(r.raw_value).slice(0, 50)));
+          row.appendChild(el('td', null, r.sport || '—'));
+          row.appendChild(el('td', null, String(r.hits)));
+          row.appendChild(el('td', null, fmtShort(r.seen_at)));
+          tbody.appendChild(row);
+        }
+      }));
+    }
+  } catch (e) {
+    box.appendChild(el('div', 'empty', e.message));
+  }
+}
+
+async function loadCompetitions() {
+  const box = $('#competitionsBox');
+  box.innerHTML = '';
+  try {
+    const d = await adminApi('/api/admin/sports/competitions');
+    const comps = d.competitions || [];
+    box.appendChild(buildTable(['Lig', 'Slug', 'Branş', 'Durum', 'Maç', 'Puan Durumu Satırı', 'Son Yazım', 'Eylem'], (tbody) => {
+      for (const c of comps) {
+        const row = el('tr');
+        row.appendChild(el('td', null, c.name));
+        row.appendChild(el('td', null, c.slug));
+        row.appendChild(el('td', null, c.sport === 'football' ? '⚽' : '🏀'));
+        const badges = el('td');
+        const b1 = el('span', 'pill ' + (c.is_enabled ? '' : 'red'), c.is_enabled ? 'AÇIK' : 'KAPALI');
+        const b2 = el('span', 'pill ' + (c.slug_status === 'candidate' ? 'yellow' : ''),
+          c.slug_status === 'candidate' ? 'ADAY' : 'AKTİF');
+        badges.appendChild(b1);
+        badges.appendChild(document.createTextNode(' '));
+        badges.appendChild(b2);
+        row.appendChild(badges);
+        row.appendChild(el('td', null, String(c.match_count)));
+        row.appendChild(el('td', null, String(c.standings_rows)));
+        row.appendChild(el('td', null, fmtShort(c.last_match_write)));
+        const act = el('td');
+        const toggle = el('button', 'btn small ' + (c.is_enabled ? 'ghost' : ''),
+          c.is_enabled ? 'Kapat' : 'Aç');
+        toggle.type = 'button';
+        toggle.addEventListener('click', () => toggleCompetition(c, c.is_enabled ? 0 : 1));
+        act.appendChild(toggle);
+        if (c.slug_status === 'candidate' && c.is_enabled) {
+          const verify = el('button', 'btn small', 'Doğrula');
+          verify.type = 'button';
+          verify.addEventListener('click', () => verifyCompetition(c));
+          act.appendChild(document.createTextNode(' '));
+          act.appendChild(verify);
+        }
+        if (c.slug_status === 'candidate' && !c.match_count) {
+          const del = el('button', 'btn small danger', 'Sil');
+          del.type = 'button';
+          del.addEventListener('click', () => deleteCompetition(c));
+          act.appendChild(document.createTextNode(' '));
+          act.appendChild(del);
+        }
+        row.appendChild(act);
+        tbody.appendChild(row);
+      }
+    }));
+  } catch (e) {
+    box.appendChild(el('div', 'empty', e.message));
+  }
+}
+
+async function toggleCompetition(c, isEnabled) {
+  try {
+    await adminApi(`/api/admin/sports/competitions/${c.id}`, {
+      method: 'POST', body: JSON.stringify({ is_enabled: isEnabled })
+    });
+    toast(isEnabled ? `${c.name} açıldı; bir sonraki turda senkronlanacak.` : `${c.name} kapatıldı; artık senkronlanmaz.`);
+    loadCompetitions();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function verifyCompetition(c) {
+  try {
+    await adminApi(`/api/admin/sports/competitions/${c.id}`, {
+      method: 'POST', body: JSON.stringify({ slug_status: 'active' })
+    });
+    toast(`${c.name} doğrulandı (AKTİF).`);
+    loadCompetitions();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function deleteCompetition(c) {
+  try {
+    await adminApi(`/api/admin/sports/competitions/${c.id}`, { method: 'DELETE' });
+    toast(`Aday lig silindi: ${c.slug}`);
+    loadCompetitions();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function addCandidateLeague() {
+  const slug = $('#ncSlug').value.trim();
+  const name = $('#ncName').value.trim();
+  const sport = $('#ncSport').value;
+  if (!slug || !name) return toast('Slug ve görünen ad zorunlu.', true);
+  try {
+    await adminApi('/api/admin/sports/competitions', {
+      method: 'POST', body: JSON.stringify({ slug, sport, name })
+    });
+    toast(`Aday lig eklendi: ${slug} — KAPALI başladı.`);
+    $('#ncSlug').value = ''; $('#ncName').value = '';
+    loadCompetitions();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function loadTeams(q) {
+  const box = $('#teamsBox');
+  box.innerHTML = '';
+  try {
+    const d = await adminApi(`/api/admin/sports/teams${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+
+    const umBox = $('#unmappedTeamsBox');
+    umBox.innerHTML = '';
+    const chips = el('div', 'chips');
+    const unmapped = d.unmapped_team_names || [];
+    if (unmapped.length) {
+      chips.appendChild(el('span', 'muted tiny', 'Feed’de görülen yeni adlar:'));
+      for (const u of unmapped.slice(0, 12)) {
+        chips.appendChild(el('span', 'chip', `${u.raw_value} (${u.hits}×)`));
+      }
+    }
+    umBox.appendChild(chips);
+
+    const teams = d.teams || [];
+    if (!teams.length) {
+      box.appendChild(el('div', 'empty', q ? 'Aramayla eşleşen takım yok.' : 'Henüz takım kaydı yok.'));
+      return;
+    }
+    box.appendChild(buildTable(['Feed Adı', 'Görünen Ad', 'Maç', 'Kaydet'], (tbody) => {
+      for (const t of teams) {
+        const row = el('tr');
+        row.appendChild(el('td', null, t.name));
+        const inputCell = el('td');
+        const input = el('input', 'input');
+        input.type = 'text';
+        input.maxLength = 40;
+        input.value = t.display_name || '';
+        input.placeholder = t.name;
+        input.style.minWidth = '160px';
+        inputCell.appendChild(input);
+        row.appendChild(inputCell);
+        row.appendChild(el('td', null, String(t.match_count)));
+        const act = el('td');
+        const save = el('button', 'btn small', 'Kaydet');
+        save.type = 'button';
+        save.addEventListener('click', async () => {
+          try {
+            await adminApi(`/api/admin/sports/teams/${t.id}/display-name`, {
+              method: 'POST', body: JSON.stringify({ displayName: input.value })
+            });
+            toast(input.value ? `Görünen ad kaydedildi: ${input.value}` : 'Görünen ad temizlendi (feed adına dönüldü).');
+            loadTeams(q);
+          } catch (e) { toast(e.message, true); }
+        });
+        act.appendChild(save);
+        row.appendChild(act);
+        tbody.appendChild(row);
+      }
+    }));
+  } catch (e) {
+    box.appendChild(el('div', 'empty', e.message));
+  }
+}
+
+async function manualSync(kind) {
+  const paths = {
+    fixtures: '/api/admin/sports/sync/fixtures',
+    live: '/api/admin/sports/sync/live',
+    standings: '/api/admin/sports/sync/standings'
+  };
+  try {
+    const r = await adminApi(paths[kind], { method: 'POST', body: '{}' });
+    toast(r.note || 'Arka planda başladı.');
+    setTimeout(loadSportsTab, 1500);
+  } catch (e) { toast(e.message, true); }
+}
+
 /* ---------------- yükleme & olaylar ---------------- */
 async function refreshAll() {
   try {
@@ -522,4 +872,14 @@ document.querySelectorAll('#adminTabs .tab').forEach((t) => {
 $('#mfAdd').addEventListener('click', addManualFixture);
 ['#mfHome', '#mfAway', '#mfKickoff', '#mfLabel'].forEach((sel) => {
   $(sel).addEventListener('keydown', (e) => { if (e.key === 'Enter') addManualFixture(); });
+});
+
+/* AŞAMA 10: Spor Verisi olayları */
+$('#syncFixturesBtn').addEventListener('click', () => manualSync('fixtures'));
+$('#syncLiveBtn').addEventListener('click', () => manualSync('live'));
+$('#syncStandingsBtn').addEventListener('click', () => manualSync('standings'));
+$('#ncAdd').addEventListener('click', addCandidateLeague);
+$('#teamSearchBtn').addEventListener('click', () => loadTeams($('#teamSearch').value.trim()));
+$('#teamSearch').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') loadTeams($('#teamSearch').value.trim());
 });

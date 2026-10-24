@@ -19,7 +19,8 @@ const MIGRATIONS = [
   require('./004_live_scores_columns'),
   require('./005_standings'),
   require('./006_match_detail'),
-  require('./007_forecast_kahin_sensin')
+  require('./007_forecast_kahin_sensin'),
+  require('./008_asama10_monitoring')
 ].sort((a, b) => a.version - b.version);
 
 function nowIso() {
@@ -55,6 +56,7 @@ function upsertCompetitions() {
       logo_url   = excluded.logo_url,
       sort_order = excluded.sort_order,
       is_enabled = 1,
+      slug_status = 'active',
       updated_at = excluded.updated_at
   `);
   const run = db.transaction(() => {

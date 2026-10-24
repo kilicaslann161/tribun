@@ -57,14 +57,14 @@ const MATCH_ROW_SQL = `
          m.match_slug, m.ht_home, m.ht_away, m.updated_at,
          c.slug AS comp_slug, c.name AS comp_name, c.country AS comp_country,
          c.logo_url AS comp_logo,
-         th.name AS home_name, th.logo_url AS home_logo,
-         ta.name AS away_name, ta.logo_url AS away_logo
+         COALESCE(th.display_name, th.name) AS home_name, th.logo_url AS home_logo,
+         COALESCE(ta.display_name, ta.name) AS away_name, ta.logo_url AS away_logo
     FROM matches m
     JOIN competitions c ON c.id = m.competition_id
     LEFT JOIN teams th ON th.id = m.home_team_id
     LEFT JOIN teams ta ON ta.id = m.away_team_id
-   WHERE m.feed_missing = 0 AND m.id = ?
-   LIMIT 1`;
+   WHERE m.feed_missing = 0 AND c.is_enabled = 1 AND m.id = ?
+   LIMIT 1`; // AŞAMA 10: kapatılan lig maç detayında da gizlenir
 
 function loadMatchRow(db, id) {
   return db.prepare(MATCH_ROW_SQL).get(id);
