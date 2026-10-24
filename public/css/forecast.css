@@ -1,0 +1,329 @@
+/**
+ * Tribün — Kâhin Sensin sayfası (#/kahin-sensin) stilleri
+ * Aşama 6-8 spor arayüzlerinin tasarım disipliniyle uyumlu: base.css token'ları,
+ * kare köşeler (poster estetiği), sert gölgeler, inline SVG (emoji YOK),
+ * --acc-oracle (mor) vurgusu. Tüm yeni kurallar fc- önekiyle.
+ */
+
+.fc-wrap { max-width: 880px; margin: 0 auto; }
+
+.fc-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.fc-head .ico-box {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: var(--bw-2) solid var(--ink);
+  background: var(--acc-oracle);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+}
+
+.fc-head h1 {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 40px);
+  letter-spacing: .5px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.fc-rule {
+  margin: var(--sp-3) 0 0;
+  color: var(--muted);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.fc-rule b { color: var(--chalk); font-weight: 600; }
+
+/* ---------- bölüm başlıkları ---------- */
+.fc-sec {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-6) 0 var(--sp-3);
+  font-family: var(--font-display);
+  font-size: 19px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+}
+
+.fc-sec::after {
+  content: "";
+  flex: 1;
+  height: var(--bw-1);
+  background: var(--line);
+}
+
+.fc-sec .count {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--acc-oracle);
+  border: var(--bw-1) solid var(--ink);
+  padding: 1px 8px;
+}
+
+/* ---------- maç kartı ---------- */
+.fc-fixture {
+  border: var(--bw-2) solid var(--ink);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-3);
+}
+
+.fc-fixture.is-locked { border-color: var(--line); box-shadow: none; opacity: .96; }
+
+.fc-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-3);
+}
+
+.fc-league {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  color: var(--acc-oracle);
+  border: var(--bw-1) solid var(--acc-oracle);
+  padding: 2px 8px;
+}
+
+.fc-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13.5px;
+  color: var(--muted);
+  font-family: var(--font-pixel);
+  font-size: 16px;
+  letter-spacing: .5px;
+}
+
+.fc-teams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.fc-team {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: clamp(17px, 3.2vw, 24px);
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fc-team.away { text-align: right; }
+
+.fc-score {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 4vw, 30px);
+  padding: 2px 12px;
+  border: var(--bw-2) solid var(--ink);
+  background: var(--ink);
+  color: var(--pitch);
+  box-shadow: var(--shadow-sm);
+}
+
+.fc-score.is-null { color: var(--muted); }
+
+/* ---------- tahmin kontrolleri ---------- */
+.fc-pick-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.fc-pick-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.fc-seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: var(--bw-2) solid var(--ink);
+  background: var(--ink);
+  gap: var(--bw-2);
+}
+
+.fc-seg.two { grid-template-columns: repeat(2, 1fr); }
+
+.fc-seg-btn {
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: 17px;
+  letter-spacing: .5px;
+  padding: 9px 4px;
+  border: none;
+  background: var(--card-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease;
+}
+
+.fc-seg-btn small {
+  display: block;
+  font-family: var(--font);
+  font-size: 10.5px;
+  letter-spacing: .3px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.fc-seg-btn:hover:not(:disabled) { background: #1A3A26; }
+
+.fc-seg-btn.selected {
+  background: var(--acc-oracle);
+  color: var(--ink);
+}
+
+.fc-seg-btn.selected small { color: var(--ink); }
+
+.fc-seg-btn:disabled { cursor: default; opacity: .55; }
+
+.fc-submit {
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  padding: 11px;
+  border: var(--bw-2) solid var(--ink);
+  background: var(--acc-oracle);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.fc-submit:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: var(--shadow-md); }
+.fc-submit:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+
+/* ---------- kilitli tahmin / durum satırları ---------- */
+.fc-locked {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  border: var(--bw-1) dashed var(--acc-oracle);
+  padding: 10px var(--sp-3);
+  font-size: 15px;
+}
+
+.fc-locked .fc-val {
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: .4px;
+  color: var(--chalk);
+}
+
+.fc-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  color: var(--muted);
+}
+
+.fc-note.wait { color: var(--amber); }
+
+/* ---------- sonuç listesi ---------- */
+.fc-result {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--sp-3);
+  border: var(--bw-2) solid var(--ink);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-2);
+}
+
+.fc-result .fc-team { font-size: clamp(14px, 2.6vw, 19px); }
+
+.fc-result-mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.fc-result-chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+
+.fc-res-chip {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  border: var(--bw-1) solid var(--line);
+  color: var(--muted);
+  padding: 1px 7px;
+  text-transform: uppercase;
+}
+
+.fc-res-chip.hit { border-color: var(--pitch); color: var(--pitch); }
+.fc-res-chip.miss { border-color: var(--redcard); color: var(--redcard); }
+
+.fc-points {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--amber);
+}
+
+.fc-points.zero { color: var(--muted); font-family: var(--font); font-weight: 600; }
+
+.fc-cancel-note {
+  grid-column: 1 / -1;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+/* ---------- boş/hata ---------- */
+.fc-error {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  border: var(--bw-2) solid var(--redcard);
+  padding: var(--sp-3);
+  background: rgba(255, 59, 92, .07);
+  margin-bottom: var(--sp-3);
+}
+
+.fc-error button { margin-left: auto; }
+
+/* ---------- mobil ---------- */
+@media (max-width: 560px) {
+  .fc-pick-row { grid-template-columns: 1fr; }
+  .fc-fixture { padding: var(--sp-3); }
+  .fc-result { padding: var(--sp-2) var(--sp-3); }
+  .fc-seg-btn { font-size: 15px; padding: 8px 2px; }
+}

@@ -1,0 +1,239 @@
+/* ============================================================
+   Tribün — match.css · Maç detay sayfası (#/mac/:id) · AŞAMA 8
+   Skor tahtası + olay zaman çizelgesi + karşılaştırmalı
+   istatistik çubukları + kadrolar.
+
+   Kimlik korunur (base.css token'ları): kalın kenarlıklar, kare
+   köşeler, sert ofset gölgeler, pixel etiketler. Yeni renk/font
+   İCAT EDİLMEZ. Sınıflar "md-" önekiyle bu dosyada toplanır;
+   sp-* sınıfları (uyarı şeridi, boş durum, atıf) sports.css'ten
+   yeniden kullanılır.
+   ============================================================ */
+
+/* ---------- Skor tahtası ---------- */
+.md-board{
+  border:var(--bw-1) solid var(--line);
+  background:var(--ink-2);
+  box-shadow:var(--shadow-sm);
+  margin:var(--sp-3) 0;
+  padding:var(--sp-3) var(--sp-4) var(--sp-4);
+}
+.md-board.skeleton-board{ min-height:150px; }
+
+.md-comp{
+  display:flex; align-items:center; justify-content:center; gap:var(--sp-2);
+  padding:2px 10px; margin:0 auto var(--sp-3); width:fit-content; max-width:100%;
+  border:1px solid var(--line); background:var(--ink);
+  color:var(--muted); text-decoration:none;
+  font-family:var(--font-pixel); font-size:15px; letter-spacing:1px;
+  text-transform:uppercase; line-height:1.4;
+  transition:color var(--dur-fast), border-color var(--dur-fast);
+}
+.md-comp:hover{ color:var(--pitch); border-color:var(--pitch); }
+.md-comp img{ width:18px; height:18px; object-fit:contain; flex:0 0 auto; }
+.md-comp span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.md-teams{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(150px,auto) minmax(0,1fr);
+  align-items:center; gap:var(--sp-3);
+}
+.md-team{
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  min-width:0; text-align:center;
+}
+.md-team .sp-logo{ width:44px; height:44px; }
+.md-team b{
+  font-size:.95rem; font-weight:700; line-height:1.2; max-width:100%;
+  overflow:hidden; text-overflow:ellipsis;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+}
+
+/* orta blok: skor + durum + dakika + İY + başlama saati */
+.md-center{
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  text-align:center;
+}
+.md-score{
+  font-family:var(--font-display); font-size:2.1rem; line-height:1;
+  letter-spacing:2px; color:var(--chalk); white-space:nowrap;
+}
+.md-board.is-live .md-score{ color:var(--pitch); }
+.md-status{
+  display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap;
+  justify-content:center; line-height:1.2;
+  font-family:var(--font-pixel); font-size:15px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--muted);
+}
+.md-live-badge{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:1px 7px; border:1px solid currentColor; color:var(--pitch);
+}
+.md-minute{
+  color:var(--chalk); border:1px solid var(--line);
+  padding:0 6px; background:var(--ink);
+}
+.md-sub{ color:var(--muted); }
+.md-ht{ font-size:14px; color:var(--muted); }
+.md-kickoff{ font-size:14px; color:var(--muted); }
+
+/* ---------- bölüm kartları ---------- */
+.md-card{ margin-bottom:var(--sp-5); }
+.md-sec-head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:var(--sp-3); flex-wrap:wrap; margin-bottom:var(--sp-3);
+}
+.md-sec-head .section-title{ margin:0; }
+
+/* ---------- Olaylar: iki yana açık zaman çizelgesi ---------- */
+.md-timeline{ display:flex; flex-direction:column; }
+.md-ev{
+  display:grid; grid-template-columns:minmax(0,1fr) 52px minmax(0,1fr);
+  align-items:center; gap:var(--sp-2);
+  padding:6px 0; border-top:1px solid var(--line-soft);
+}
+.md-ev:first-child{ border-top:none; }
+.md-ev-min{
+  font-family:var(--font-pixel); font-size:17px; letter-spacing:.5px;
+  color:var(--muted); text-align:center; line-height:1;
+  padding:4px 0; border:1px solid var(--line); background:var(--ink-2);
+}
+.md-chip{
+  display:inline-flex; align-items:center; gap:7px;
+  max-width:100%; min-width:0;
+  padding:5px 9px; border:1px solid var(--line);
+  background:var(--ink); line-height:1.25;
+}
+.md-ev-home .md-chip{ justify-self:end; border-right:var(--bw-1) solid var(--line); }
+.md-ev-away .md-chip{ justify-self:start; }
+.md-chip svg{ flex:0 0 auto; }
+.md-chip-txt{ min-width:0; display:flex; flex-direction:column; }
+.md-chip-txt b{ font-size:.85rem; font-weight:600; overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap; }
+.md-chip-txt span{ font-family:var(--font-pixel); font-size:14px;
+  letter-spacing:.5px; color:var(--muted); text-transform:uppercase;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* ev sahibi çipleri sağa yaslı, deplasman sola — taraf netliği */
+.md-ev-home .md-chip{ flex-direction:row; }
+/* ikon renkleri: olay türü anlamı renkle DESTEKLENİR (metin her zaman var) */
+.md-ico-goal{ color:var(--pitch); }
+.md-ico-pen{ color:var(--pitch); }
+.md-ico-card{ color:var(--amber); }
+.md-ico-sub{ color:var(--flood); }
+.md-ico-var{ color:var(--redcard); }
+.md-ico-event{ color:var(--muted); }
+.md-chip .md-scorerun{ font-family:var(--font-pixel); font-size:14px;
+  color:var(--muted); white-space:nowrap; }
+
+/* ---------- İstatistikler: karşılaştırmalı çubuklar ---------- */
+.md-stats{ display:flex; flex-direction:column; gap:var(--sp-3); }
+.md-stat-nums{
+  display:grid; grid-template-columns:64px minmax(0,1fr) 64px;
+  align-items:center; gap:var(--sp-2); margin-bottom:6px;
+}
+.md-stat-nums b{
+  font-family:var(--font-display); font-size:1rem; letter-spacing:.5px;
+  color:var(--chalk); line-height:1;
+}
+.md-stat-nums b.md-aw{ text-align:right; }
+.md-stat-label{
+  font-family:var(--font-pixel); font-size:15px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--muted); text-align:center;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.md-bars{ display:flex; gap:3px; height:10px; }
+.md-bar{ height:100%; border:1px solid var(--ink); min-width:0; }
+.md-bar-h{ background:var(--pitch); }
+.md-bar-a{ background:var(--flood); }
+.md-bars .md-bar-h{ margin-left:auto; }  /* ev sahibi çubuğu MERKEZDEN dışa */
+
+/* ---------- Kadrolar ---------- */
+.md-lineups{
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-4);
+}
+.md-lu{ border:1px solid var(--line); background:var(--ink); min-width:0;
+  padding:var(--sp-3); }
+.md-lu-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:var(--sp-2); padding-bottom:var(--sp-2); margin-bottom:var(--sp-2);
+  border-bottom:var(--bw-1) solid var(--line);
+}
+.md-lu-head b{
+  font-size:.9rem; font-weight:700; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.md-lu-form{
+  font-family:var(--font-pixel); font-size:15px; letter-spacing:1px;
+  color:var(--pitch); border:1px solid var(--line);
+  padding:1px 7px; background:var(--ink-2); flex:0 0 auto;
+}
+.md-lu-part{
+  font-family:var(--font-pixel); font-size:14px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--muted);
+  margin:var(--sp-3) 0 4px;
+}
+.md-lu-part:first-child{ margin-top:0; }
+.md-lu-pos{
+  font-family:var(--font-pixel); font-size:13px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--flood);
+  margin:8px 0 3px;
+}
+.md-player{
+  display:flex; align-items:center; gap:8px;
+  padding:3px 0; min-width:0;
+}
+.md-num{
+  flex:0 0 auto; width:26px; height:22px;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-family:var(--font-pixel); font-size:14px;
+  color:var(--muted); border:1px solid var(--line); background:var(--ink-2);
+}
+.md-player .md-name{
+  min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-size:.85rem;
+}
+.md-cap{
+  flex:0 0 auto; font-family:var(--font-pixel); font-size:13px;
+  color:var(--amber); border:1px solid var(--amber);
+  padding:0 4px; line-height:1.3;
+}
+
+/* ---------- üst bilgi satırı ---------- */
+.md-top{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:var(--sp-2); flex-wrap:wrap; margin-top:var(--sp-3);
+}
+.md-back{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--font-pixel); font-size:15px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--muted); text-decoration:none;
+  border-bottom:2px solid var(--line); padding-bottom:2px;
+  transition:color var(--dur-fast), border-color var(--dur-fast);
+}
+.md-back:hover{ color:var(--pitch); border-color:var(--pitch); }
+
+/* [hidden] + display:grid/flex çakışması (sports.css kuralıyla aynı amaç) */
+.md-teams[hidden], .md-lineups[hidden], .md-ev[hidden]{ display:none; }
+
+/* ---------- Mobil ---------- */
+@media (max-width:480px){
+  .md-board{ padding:var(--sp-2) var(--sp-2) var(--sp-3); }
+  .md-teams{ gap:var(--sp-2); }
+  .md-team .sp-logo{ width:34px; height:34px; }
+  .md-team b{ font-size:.8rem; }
+  .md-center{ min-width:96px; }
+  .md-score{ font-size:1.5rem; letter-spacing:1px; }
+  .md-status{ font-size:13px; }
+  /* zaman çizelgesi: tek satırda iki taraf da sığar (chip'ler esnek) */
+  .md-ev{ grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr); gap:5px; }
+  .md-ev-min{ font-size:14px; }
+  .md-chip{ padding:4px 6px; gap:5px; }
+  .md-chip-txt b{ font-size:.74rem; }
+  .md-chip-txt span{ font-size:12px; }
+  /* istatistik sayı sütunları daralır */
+  .md-stat-nums{ grid-template-columns:48px minmax(0,1fr) 48px; }
+  .md-stat-nums b{ font-size:.9rem; }
+  .md-stat-label{ font-size:13px; }
+  /* kadrolar alt alta */
+  .md-lineups{ grid-template-columns:1fr; }
+}

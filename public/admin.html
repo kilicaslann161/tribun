@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Tribün · Admin Paneli</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='8' width='52' height='52' fill='%232FE0FF'/%3E%3Crect x='4' y='4' width='52' height='52' fill='%2300FF87' stroke='%2306130C' stroke-width='4'/%3E%3Ccircle cx='30' cy='30' r='14' fill='%2306130C'/%3E%3Cpath d='M30 24 L35.7 28.2 33.5 34.9 26.5 34.9 24.3 28.2Z' fill='%23F2F7EF'/%3E%3Cg stroke='%23F2F7EF' stroke-width='2'%3E%3Cpath d='M30 24V16M35.7 28.2 43.3 25.7M33.5 34.9 38.2 41.4M26.5 34.9 21.8 41.4M24.3 28.2 16.7 25.7'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="logo" href="/" aria-label="Tribün sitesine dön">
+        <span class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="img">
+            <rect x="8" y="8" width="52" height="52" fill="#2FE0FF"/>
+            <rect x="4" y="4" width="52" height="52" fill="#00FF87" stroke="#06130C" stroke-width="4"/>
+            <circle cx="30" cy="30" r="14" fill="#06130C"/>
+            <path d="M30 24 L35.7 28.2 33.5 34.9 26.5 34.9 24.3 28.2Z" fill="#F2F7EF"/>
+            <g stroke="#F2F7EF" stroke-width="2">
+              <path d="M30 24V16M35.7 28.2 43.3 25.7M33.5 34.9 38.2 41.4M26.5 34.9 21.8 41.4M24.3 28.2 16.7 25.7"/>
+            </g>
+          </svg>
+        </span><span class="logo-text">TRİ<b>BÜN</b></span><span class="dot" aria-hidden="true"></span>
+      </a>
+      <span class="pill yellow">Admin Paneli</span>
+      <span class="spacer"></span>
+      <a class="btn ghost small" href="/">← Siteye dön</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card" id="keyCard">
+      <h2 style="margin-top:0">🔐 Admin Anahtarı</h2>
+      <p class="muted">Sunucunun <code>.env</code> dosyasındaki <code>ADMIN_KEY</code> değerini gir. Anahtar yalnızca sayfa açıkken bellekte durur; tarayıcıya kaydedilmez, sayfa kapanınca uçar.</p>
+      <div class="row">
+        <input id="adminKey" class="input" type="password" placeholder="ADMIN_KEY" autocomplete="off">
+        <button type="button" class="btn" id="saveKey">Giriş yap</button>
+      </div>
+    </section>
+
+    <section id="panel" hidden>
+      <div class="tabs" id="adminTabs">
+        <button type="button" class="tab active" data-tab="stats">📊 İstatistikler</button>
+        <button type="button" class="tab" data-tab="reports">🚩 Bekleyen Raporlar</button>
+        <button type="button" class="tab" data-tab="content">🕓 Son Eklenenler</button>
+        <button type="button" class="tab" data-tab="rooms">🏟️ Bingo Odaları</button>
+        <button type="button" class="tab" data-tab="matches">⚽ Maçlar</button>
+      </div>
+
+      <section class="card" id="tab-stats">
+        <div class="grid" id="stats"></div>
+      </section>
+
+      <section class="card" id="tab-reports" hidden>
+        <p class="muted">İçerik başına düşen raporlar burada gruplanır. 3 farklı kullanıcı rapor ederse içerik otomatik gizlenir.</p>
+        <div id="reports"><div class="empty">Yükleniyor…</div></div>
+      </section>
+
+      <section class="card" id="tab-content" hidden>
+        <h3 style="margin-top:0">📚 Son 20 Terim</h3>
+        <div id="recentTerms"><div class="empty">Yükleniyor…</div></div>
+        <h3 class="mt">📖 Son 20 Anı</h3>
+        <div id="recentMemories"><div class="empty">Yükleniyor…</div></div>
+      </section>
+
+      <section class="card" id="tab-rooms" hidden>
+        <p class="muted">Son 10 bingo odası: kod, durum, kurucu, oyuncu sayısı ve kazanan. Odalar 24 saat sonra otomatik kapanır.</p>
+        <div id="roomsBox"><div class="empty">Yükleniyor…</div></div>
+      </section>
+
+      <section class="card" id="tab-matches" hidden>
+        <h3 style="margin-top:0">🔮 Senkron Maçlardan Aktar (Kâhin Sensin)</h3>
+        <p class="muted">Senkronize edilmiş gelecek 7 günün futbol maçları tek tıkla Kâhin Sensin tahmin oyununa aktarılır.
+        Maç bittikten ~30 dk sonra puanlar otomatik dağıtılır. Yalnızca futbol aktarılabilir; basketbol reddedilir.</p>
+        <div id="forecastCandidates"><div class="empty">Yükleniyor…</div></div>
+
+        <h3 class="mt">✍️ Elle Maç Ekle</h3>
+        <p class="muted">Elle girilen maçlar senkron akışından bağımsızdır; sonucu sen girersin (aşağıdaki listeden).</p>
+        <div class="row" id="manualFixtureForm">
+          <input class="input" id="mfHome" placeholder="Ev sahibi takım" maxlength="40" style="flex:1;min-width:130px">
+          <input class="input" id="mfAway" placeholder="Deplasman takım" maxlength="40" style="flex:1;min-width:130px">
+          <input class="input" id="mfKickoff" type="datetime-local" style="flex:1;min-width:170px" title="Başlama saati (Türkiye saati)">
+          <input class="input" id="mfLabel" placeholder="Lig etiketi (opsiyonel)" maxlength="40" style="flex:1;min-width:130px">
+          <button type="button" class="btn" id="mfAdd">Ekle</button>
+        </div>
+
+        <h3 class="mt">📋 Kâhin Sensin Maçları</h3>
+        <p class="muted">Kırmızı “İNCELEME GEREKLİ” etiketi: bağlı senkron maçı ertelenmiş/iptal edilmiş, veri akışından düşmüş ya da saati değişmiş demektir. Otomatik iptal yapılmaz — saat güncelleyebilir, iptal edebilir ya da incelemeyi kapatabilirsin.</p>
+        <div id="forecastFixtures"><div class="empty">Yüklenıyor…</div></div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toastWrap"></div>
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

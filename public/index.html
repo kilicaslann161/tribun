@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#06130C">
+  <title>🏟️ Tribün — Futbol Mini Oyun Merkezi</title>
+  <meta name="description" content="Tribün: yerelde çalışan, Türkçe, mobil öncelikli futbol mini oyun merkezi. Penaltı, bingo, transfer, sözlük ve daha fazlası.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='8' width='52' height='52' fill='%232FE0FF'/%3E%3Crect x='4' y='4' width='52' height='52' fill='%2300FF87' stroke='%2306130C' stroke-width='4'/%3E%3Ccircle cx='30' cy='30' r='14' fill='%2306130C'/%3E%3Cpath d='M30 24 L35.7 28.2 33.5 34.9 26.5 34.9 24.3 28.2Z' fill='%23F2F7EF'/%3E%3Cg stroke='%23F2F7EF' stroke-width='2'%3E%3Cpath d='M30 24V16M35.7 28.2 43.3 25.7M33.5 34.9 38.2 41.4M26.5 34.9 21.8 41.4M24.3 28.2 16.7 25.7'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/sports.css">
+  <link rel="stylesheet" href="/css/league.css">
+  <link rel="stylesheet" href="/css/match.css">
+  <link rel="stylesheet" href="/css/forecast.css">
+  <link rel="stylesheet" href="/css/games.css">
+</head>
+<body>
+  <!-- Üst bar: logo + ana menü (masaüstü) + kullanıcı -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="logo" href="#/" aria-label="Tribün ana sayfa">
+        <span class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="img">
+            <rect x="8" y="8" width="52" height="52" fill="#2FE0FF"/>
+            <rect x="4" y="4" width="52" height="52" fill="#00FF87" stroke="#06130C" stroke-width="4"/>
+            <circle cx="30" cy="30" r="14" fill="#06130C"/>
+            <path d="M30 24 L35.7 28.2 33.5 34.9 26.5 34.9 24.3 28.2Z" fill="#F2F7EF"/>
+            <g stroke="#F2F7EF" stroke-width="2">
+              <path d="M30 24V16M35.7 28.2 43.3 25.7M33.5 34.9 38.2 41.4M26.5 34.9 21.8 41.4M24.3 28.2 16.7 25.7"/>
+            </g>
+          </svg>
+        </span><span class="logo-text">TRİ<b>BÜN</b></span><span class="dot" aria-hidden="true"></span>
+      </a>
+      <nav class="main-nav" aria-label="Ana menü">
+        <a href="#/" data-nav="home">Ana Sayfa</a>
+        <a href="#/oyunlar" data-nav="oyunlar">Oyun Salonu</a>
+        <a href="#/siralama" data-nav="siralama">Sıralama</a>
+        <a href="#/sozluk" data-nav="sozluk">Sözlük</a>
+        <a href="#/anilar" data-nav="anilar">Anılar</a>
+      </nav>
+      <span class="spacer"></span>
+      <div id="userArea" class="user-area"></div>
+    </div>
+  </header>
+
+  <main id="app" class="container" aria-live="polite"></main>
+
+  <footer class="site-footer">
+    <div class="container foot-inner">
+      <span class="foot-credit pixel foot-brand">
+        <span class="logo-mark sm" aria-hidden="true">
+          <svg viewBox="0 0 64 64">
+            <rect x="8" y="8" width="52" height="52" fill="#2FE0FF"/>
+            <rect x="4" y="4" width="52" height="52" fill="#00FF87" stroke="#06130C" stroke-width="4"/>
+            <circle cx="30" cy="30" r="14" fill="#06130C"/>
+            <path d="M30 24 L35.7 28.2 33.5 34.9 26.5 34.9 24.3 28.2Z" fill="#F2F7EF"/>
+            <g stroke="#F2F7EF" stroke-width="2">
+              <path d="M30 24V16M35.7 28.2 43.3 25.7M33.5 34.9 38.2 41.4M26.5 34.9 21.8 41.4M24.3 28.2 16.7 25.7"/>
+            </g>
+          </svg>
+        </span>
+        Tribün — yerelde çalışan futbol mini oyun merkezi
+      </span>
+      <nav class="foot-links" aria-label="Alt bağlantılar">
+        <a href="#/">Ana Sayfa</a>
+        <a href="#/siralama">Sıralama</a>
+        <a href="#/sozluk">Sözlük</a>
+        <a href="#/anilar">Anılar</a>
+        <a href="#/kart">Kartım</a>
+      </nav>
+      <a class="foot-ss pixel" href="https://sportscore.com/" rel="dofollow noopener" title="Sports data by SportScore" target="_blank">Powered by SportScore</a>
+    </div>
+  </footer>
+
+  <!-- Alt sekme çubuğu (mobil) -->
+  <nav class="bottombar" aria-label="Alt menü">
+    <button type="button" class="bb-btn" data-nav="home" data-bb="home">
+      <span class="bb-emoji" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5.5h4V20"/></svg></span><span>Ana</span>
+    </button>
+    <button type="button" class="bb-btn" data-nav="oyunlar" data-bb="oyunlar">
+      <span class="bb-emoji" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="0.5"/><rect x="13" y="4" width="7" height="7" rx="0.5"/><rect x="4" y="13" width="7" height="7" rx="0.5"/><rect x="13" y="13" width="7" height="7" rx="0.5"/></svg></span><span>Salon</span>
+    </button>
+    <button type="button" class="bb-btn" data-nav="siralama" data-bb="siralama">
+      <span class="bb-emoji" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4c0 3 1.2 4.7 3.4 5.2M17 6h3c0 3-1.2 4.7-3.4 5.2"/><path d="M12 14v4M8 21h8M9.5 18h5"/></svg></span><span>Sıralama</span>
+    </button>
+    <button type="button" class="bb-btn" data-nav="sozluk" data-bb="sozluk">
+      <span class="bb-emoji" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10 4.9 7.6 4.4 4 4.7v14.2c3.6-.3 6 .2 8 1.8 2-1.6 4.4-2.1 8-1.8V4.7c-3.6-.3-6 .2-8 1.8z"/><path d="M12 6.5v14.2"/></svg></span><span>Sözlük</span>
+    </button>
+    <button type="button" class="bb-btn" id="bbMore">
+      <span class="bb-emoji" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/></svg></span><span>Daha</span>
+    </button>
+  </nav>
+
+  <div id="modalRoot"></div>
+  <div id="toastWrap"></div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

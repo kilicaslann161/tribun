@@ -1,0 +1,30 @@
+{
+  "name": "tribun",
+  "version": "1.0.0",
+  "description": "Tribün — yerelde çalışan, Türkçe, mobil öncelikli futbol mini oyun merkezi",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "seed": "node server/seed.js",
+    "db:reset": "node server/db.js --reset",
+    "db:backup": "node server/migrations/backup.js",
+    "db:migrate": "node server/migrations/run.js",
+    "test": "node --test server/tests/matchNormalizer.test.js server/tests/sportsRead.test.js server/tests/syncLive.test.js server/tests/syncStandings.test.js server/tests/matchDetail.test.js server/tests/forecast.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

@@ -1,0 +1,304 @@
+/* ============================================================
+   Tribün — sports.css · "GÜNÜN MAÇLARI" bölümü (AŞAMA 6)
+   Ana sayfada hero banner'ın hemen altındaki maç panosu.
+   Veri: GET /api/sports/matches (SQLite okuma ucu — Aşama 4/5).
+
+   Kimlik korunur (base.css token'ları): kalın kenarlıklar, kare
+   köşeler, sert (blur'suz) ofset gölgeler, pixel etiketler,
+   koyu yeşilimsi zemin + neon çim yeşili vurgu.
+   Yeni renk/font İCAT EDİLMEZ; yalnızca var olan değişkenler
+   kullanılır. Sınıflar "sp-" önekiyle ayrı dosyada toplanır —
+   mevcut sayfaların stili etkilenmez.
+   ============================================================ */
+
+/* ---------- Bölüm kabuğu + başlık ---------- */
+.sp-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:var(--sp-3); flex-wrap:wrap;
+}
+.sp-head .section-title{ margin:0; }
+.sp-updated{
+  font-family:var(--font-pixel); font-size:15px;
+  letter-spacing:1px; color:var(--muted); white-space:nowrap;
+}
+
+/* ---------- Kontroller: gün + branş + canlı çipi ---------- */
+.sp-controls{
+  display:flex; flex-wrap:wrap; align-items:center;
+  gap:var(--sp-2); margin:var(--sp-3) 0 var(--sp-2);
+}
+.sp-seg{ display:flex; gap:var(--sp-2); flex-wrap:wrap; min-width:0; }
+/* gün sekmeleri satırı doldurur (Dün/Bugün/Yarın eşit genişlik) */
+.sp-seg.sp-seg-days{ flex:1 1 190px; }
+.sp-seg.sp-seg-days .sp-seg-btn{ flex:1; }
+
+.sp-seg-btn{
+  appearance:none; cursor:pointer; border-radius:0;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  min-height:44px; padding:8px 14px 6px;
+  font-family:var(--font-pixel); font-size:16px; letter-spacing:1px;
+  text-transform:uppercase; line-height:1;
+  background:transparent; color:var(--muted);
+  border:var(--bw-1) solid var(--line);
+  transition:color var(--dur-fast), border-color var(--dur-fast),
+             background var(--dur-fast);
+}
+.sp-seg-btn svg{ flex:0 0 auto; }
+.sp-seg-btn:hover{ color:var(--pitch); border-color:var(--pitch); }
+.sp-seg-btn.is-active{
+  background:var(--pitch); color:var(--ink);
+  border-color:var(--ink);
+  box-shadow:3px 3px 0 var(--flood);
+}
+.sp-seg-btn.is-active:hover{ color:var(--ink); }
+
+/* "Canlı (n)" filtre çipi — canlı yeşil vurgu, nabız noktası */
+.sp-live-chip{
+  appearance:none; cursor:pointer; border-radius:0;
+  display:inline-flex; align-items:center; gap:7px;
+  min-height:44px; padding:8px 14px 6px; margin-left:auto;
+  font-family:var(--font-pixel); font-size:16px; letter-spacing:1px;
+  text-transform:uppercase; line-height:1;
+  background:transparent; color:var(--pitch);
+  border:var(--bw-1) solid var(--pitch);
+  transition:color var(--dur-fast), border-color var(--dur-fast),
+             background var(--dur-fast), opacity var(--dur-fast);
+}
+.sp-live-chip:hover:not(:disabled):not(.is-active){ background:rgba(0,255,135,.1); }
+.sp-live-chip:disabled{
+  opacity:.35; cursor:not-allowed;
+  border-color:var(--line); color:var(--muted);
+}
+.sp-live-chip.is-active{
+  background:var(--pitch); color:var(--ink);
+  border-color:var(--ink);
+  box-shadow:3px 3px 0 var(--flood);
+}
+/* canlı göstergesi: hafif nabız (reduced-motion'da kapalı) */
+.sp-dot{
+  width:8px; height:8px; border-radius:50%;
+  background:currentColor; display:inline-block; flex:0 0 auto;
+  animation:spPulse 1.15s steps(2) infinite;
+}
+@keyframes spPulse{ 50%{ opacity:.25; } }
+@media (prefers-reduced-motion: reduce){
+  .sp-dot{ animation:none; }
+}
+
+/* ---------- Uyarı / hata şeritleri ---------- */
+/* [hidden]display:flex tarafından ezilmesin (kural sırası önemli) */
+.sp-note[hidden], .sp-error[hidden]{ display:none; }
+.sp-note{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  margin:var(--sp-2) 0 0; padding:7px 12px;
+  border:var(--bw-1) solid var(--amber);
+  color:var(--amber); background:rgba(255,222,59,.07);
+  font-family:var(--font-pixel); font-size:15px;
+  letter-spacing:1px; text-transform:uppercase; line-height:1.2;
+}
+.sp-note svg{ flex:0 0 auto; }
+
+.sp-error{
+  display:flex; align-items:center; gap:var(--sp-3);
+  flex-wrap:wrap; margin:var(--sp-2) 0;
+  padding:var(--sp-3); border:var(--bw-1) solid var(--redcard);
+  color:var(--redcard); background:rgba(255,59,92,.07);
+}
+.sp-error svg{ flex:0 0 auto; }
+.sp-error p{ margin:0; font-weight:600; }
+.sp-error .btn{ margin-left:auto; }
+@media (max-width:480px){
+  .sp-error .btn{ margin-left:0; width:100%; }
+}
+
+/* ---------- Lig grupları ---------- */
+.sp-body{ display:flex; flex-direction:column; gap:var(--sp-2); margin-top:var(--sp-3); }
+.sp-group{ border:var(--bw-1) solid var(--line); background:var(--ink); min-width:0; }
+
+/* AŞAMA 7: başlık satırı artık bir kapsayıcı — İÇİNDE lig sayfasına giden
+   <a class="sp-group-link"> ve AYRI bir daraltma butonu (.sp-group-toggle)
+   yaşar (button içine a konmaz: iki gerçek, bağımsız odaklanabilir kontrol). */
+.sp-group-head{
+  display:flex; align-items:center; gap:var(--sp-2);
+  min-height:48px; padding:0;
+  background:var(--ink-2); color:var(--text);
+}
+.sp-group-link{
+  flex:1; min-width:0;
+  display:flex; align-items:center; gap:var(--sp-2);
+  padding:8px 0 8px var(--sp-3);
+  color:inherit; text-decoration:none;
+  transition:color var(--dur-fast);
+}
+.sp-group-link:hover{ color:var(--pitch); }
+.sp-group-link:hover .sp-group-name{ text-decoration:underline; text-underline-offset:3px; }
+.sp-group-link:focus-visible{ outline-offset:-3px; }
+.sp-group-logo{
+  width:20px; height:20px; object-fit:contain; flex:0 0 auto;
+  display:inline-block;
+}
+.sp-group-name{
+  font-weight:700; font-size:.92rem; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.sp-group-country{
+  font-family:var(--font-pixel); font-size:14px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--muted); flex:0 0 auto;
+}
+.sp-group-count{
+  margin-left:auto; flex:0 0 auto;
+  font-family:var(--font-pixel); font-size:14px; letter-spacing:1px;
+  color:var(--flood); border:1px solid var(--line);
+  padding:2px 8px; white-space:nowrap;
+}
+/* daraltma butonu: 44px dokunma hedefi; chevron döner (doğru sınıf .ic-chevron-down —
+   eski .sp-group-chev seçici ölüydü, bu düzenlemede düzeltildi) */
+.sp-group-toggle{
+  appearance:none; cursor:pointer; border:none; border-radius:0;
+  flex:0 0 auto; width:44px; align-self:stretch;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:transparent; color:var(--muted);
+  transition:color var(--dur-fast), background var(--dur-fast);
+}
+.sp-group-toggle:hover{ color:var(--pitch); background:var(--card-2); }
+.sp-group-toggle:focus-visible{ outline-offset:-3px; }
+.sp-group-toggle .ic-chevron-down{
+  transition:transform var(--dur-fast) var(--pop);
+}
+.sp-group-toggle[aria-expanded="false"] .ic-chevron-down{ transform:rotate(-90deg); }
+.sp-group-body{ border-top:var(--bw-1) solid var(--line); }
+.sp-group-body[hidden]{ display:none; }
+
+/* ---------- Maç satırı ---------- */
+.sp-row{
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) minmax(88px,auto) minmax(0,1fr);
+  align-items:center; gap:var(--sp-2);
+  min-height:54px; padding:9px var(--sp-3);
+  border-top:1px solid var(--line-soft);
+  transition:background var(--dur-fast);
+}
+/* AŞAMA 8: has_detail'li futbol satırları GERÇEK <a> — bağlantı görünümü
+   (basketbol satırları div kalır, linklenmez) */
+a.sp-row{
+  text-decoration:none; color:inherit;
+  cursor:pointer;
+}
+a.sp-row:focus-visible{
+  outline:3px solid var(--pitch); outline-offset:-3px;
+}
+.sp-row:first-child{ border-top:none; }
+.sp-row:hover{ background:rgba(47,224,255,.05); }
+/* canlı satır: sol yeşil şerit + hafif zemin (renk yalnız DESTEK;
+   anlam her zaman metin etiketinde — "CANLI", "Bitti"...) */
+.sp-row.st-live{
+  background:rgba(0,255,135,.05);
+  box-shadow:inset 3px 0 0 var(--pitch);
+}
+.sp-row.st-live:hover{ background:rgba(0,255,135,.09); }
+
+.sp-time{
+  font-family:var(--font-pixel); font-size:16px;
+  letter-spacing:.5px; color:var(--muted); white-space:nowrap;
+}
+
+.sp-team{
+  display:flex; align-items:center; gap:var(--sp-2); min-width:0;
+}
+.sp-team.sp-away{ justify-content:flex-end; }
+.sp-team b{
+  font-size:.9rem; font-weight:600; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* takım logosu: 28px; yüklenmezse baş harf yer tutucusu (sp-logo-fb) */
+.sp-logo{
+  width:28px; height:28px; object-fit:contain;
+  flex:0 0 auto; display:inline-block;
+}
+.sp-logo-fb{
+  display:inline-flex; align-items:center; justify-content:center;
+  border:var(--bw-1) solid var(--line); background:var(--ink-2);
+  font-family:var(--font-display); font-size:.82rem;
+  color:var(--muted); letter-spacing:.5px;
+}
+
+/* orta blok: skor + durum etiketi */
+.sp-mid{
+  display:flex; flex-direction:column; align-items:center;
+  gap:3px; min-width:88px;
+}
+.sp-score{
+  font-family:var(--font-display); font-size:1.08rem;
+  letter-spacing:1.5px; color:var(--chalk);
+  line-height:1; white-space:nowrap;
+}
+.sp-row.st-live .sp-score{ color:var(--pitch); }
+.sp-row.st-scheduled .sp-score,
+.sp-row.st-postponed .sp-score,
+.sp-row.st-cancelled .sp-score,
+.sp-row.st-suspended .sp-score,
+.sp-row.st-abandoned .sp-score,
+.sp-row.st-unknown .sp-score{ color:var(--muted); }
+
+.sp-status{
+  display:inline-flex; align-items:center; justify-content:center;
+  gap:6px; flex-wrap:wrap; min-height:16px; line-height:1;
+  font-family:var(--font-pixel); font-size:14px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--muted); text-align:center;
+}
+/* ertelenen/iptal/durdurulan/yarıda kalan → sarı kart vurgusu */
+.sp-row.st-postponed .sp-status,
+.sp-row.st-cancelled .sp-status,
+.sp-row.st-suspended .sp-status,
+.sp-row.st-abandoned .sp-status{ color:var(--amber); }
+.sp-live-badge{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:1px 7px; border:1px solid currentColor; color:var(--pitch);
+}
+.sp-live-badge .sp-dot{ width:7px; height:7px; }
+.sp-period{ color:var(--muted); }
+
+/* ---------- Boş durum ---------- */
+.sp-empty{
+  text-align:center; color:var(--muted);
+  padding:var(--sp-6) var(--sp-3);
+  display:flex; flex-direction:column; align-items:center; gap:var(--sp-2);
+}
+.sp-empty svg{ color:var(--line); }
+
+/* ---------- Atıf ---------- */
+.sp-attribution{
+  display:inline-flex; align-items:center; gap:6px;
+  margin-top:var(--sp-3);
+  font-family:var(--font-pixel); font-size:15px;
+  letter-spacing:1px; text-transform:uppercase;
+  color:var(--muted); text-decoration:none;
+  border-bottom:2px solid var(--line); padding-bottom:2px;
+  transition:color var(--dur-fast), border-color var(--dur-fast);
+}
+.sp-attribution:hover{ color:var(--pitch); border-color:var(--pitch); }
+
+/* ---------- Ekran okuyucu duyuru bölgesi (görsel olarak gizli) ---------- */
+.sp-sr{
+  position:absolute; width:1px; height:1px;
+  margin:-1px; padding:0; border:0;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;
+}
+
+/* ---------- Mobil: tek sütun, kompakt satır, yatay kaydırma YOK ---------- */
+@media (max-width:480px){
+  .sp-row{
+    grid-template-columns:34px minmax(0,1fr) minmax(56px,auto) minmax(0,1fr);
+    gap:5px; padding:8px;
+  }
+  .sp-team{ gap:5px; }
+  .sp-team b{ font-size:.78rem; }
+  .sp-time{ font-size:14px; }
+  .sp-mid{ min-width:56px; gap:2px; }
+  .sp-score{ font-size:.9rem; letter-spacing:1px; }
+  .sp-status{ font-size:13px; }
+  .sp-group-head{ min-height:44px; gap:0; }
+  .sp-group-link{ padding-left:10px; gap:8px; }
+  .sp-group-country{ display:none; } /* dar ekranda ülke yer kaplamasın */
+  .sp-group-count{ padding:2px 6px; font-size:13px; }
+}

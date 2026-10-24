@@ -1,0 +1,17 @@
+# Bağımlılıklar
+node_modules/
+
+# Ortam değişkenleri — gizli, asla commit'lenmez (.env.example şablon olarak durur)
+.env
+
+# Çalışma zamanı verisi (SQLite + yedekler) — kaynak kod DEĞİLDİR.
+# DİKKAT: kökten bağı (/) önemli; server/data/ ise KAYNAK KODDUR ve commit edilir.
+/data/
+*.db
+*.db-wal
+*.db-shm
+
+# Loglar
+*.log
+nohup.out
+npm-debug.log*

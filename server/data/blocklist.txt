@@ -1,0 +1,16 @@
+# ============================================================
+# Tribün — küfür/spam filtresi kelime listesi
+# Her satıra bir kelime ya da kelime kökü yaz.
+#   - Kısa kelimeler (3 karakter ve altı) yalnızca tam kelime olarak eşleşir
+#     ("amk123" gibi kök+rakam da yakalanır)
+#   - Uzun kelimeler hem normal hem "aralarına nokta/boşluk konmuş"
+#     hâlleriyle ("k.ü.f.ü.r") eşleşir
+# Türkçe karakter fark etmez: Ş=ş=s, İ=ı=i, Ğ=ğ=g ... otomatik normalize edilir.
+# Ayrıca basit leet dönüşümleri yapılır: @→a, $→s, 3→e, 1→i, 0→o, 5→s, 4→a
+#
+# AŞAĞIDAKİLER SADECE YER TUTUCUDUR — gerçek listeyi sen doldur.
+# ============================================================
+testkufuru
+ornekkufur
+spamkelimesi
+uygunsuzornek

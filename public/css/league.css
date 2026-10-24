@@ -1,0 +1,177 @@
+/* ============================================================
+   Tribün — league.css · Lig sayfası (#/lig/:slug) · AŞAMA 7
+   Puan durumu tablosu + lig maçları bölümü.
+
+   Kimlik korunur (base.css token'ları): kalın kenarlıklar, kare
+   köşeler, sert (blur'suz) ofset gölgeler, pixel etiketler.
+   Yeni renk/font İCAT EDİLMEZ; promo renkleri VERİDEN gelir
+   (sağlayıcının yükselme/düşme renkleri — inline style).
+   Sınıflar "lg-" önekiyle bu dosyada toplanır; sp-* sınıfları
+   (boş durum, uyarı/hata şeridi, atıf, maç satırı) sports.css'ten
+   YENİDEN KULLANILIR.
+   ============================================================ */
+
+/* ---------- Lig başlığı ---------- */
+.lg-head{
+  display:flex; align-items:center; gap:var(--sp-3);
+  margin:var(--sp-3) 0 var(--sp-3);
+  padding:var(--sp-3) var(--sp-4);
+  border:var(--bw-1) solid var(--line);
+  background:var(--ink-2);
+  box-shadow:var(--shadow-sm);
+}
+.lg-logo{
+  width:40px; height:40px; object-fit:contain; flex:0 0 auto;
+}
+.lg-title-box{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.lg-title{
+  margin:0; font-family:var(--font-display);
+  font-size:1.5rem; letter-spacing:.5px; line-height:1.05;
+  text-transform:uppercase;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.lg-country{
+  font-family:var(--font-pixel); font-size:15px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--muted);
+}
+.lg-head.skeleton-head{ height:88px; border-style:solid; }
+
+/* ---------- Bölüm kartları ---------- */
+.lg-card{ margin-bottom:var(--sp-5); }
+.lg-sec-head{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:var(--sp-3); flex-wrap:wrap; margin-bottom:var(--sp-3);
+}
+.lg-sec-head .section-title{ margin:0; }
+.lg-empty-note{ max-width:420px; margin:0 auto; }
+
+/* ---------- Puan durumu tablosu: KUTU İÇİNDE yatay kaydırma ---------- */
+.lg-table-wrap{
+  overflow-x:auto;            /* sayfa gövdesi DEĞİL, tablo kutusu kayar */
+  border:var(--bw-1) solid var(--line);
+  background:var(--ink);
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  scrollbar-color:var(--line) transparent;
+}
+.lg-table{
+  border-collapse:collapse; width:100%;
+  min-width:620px;              /* dar ekranda ezilme değil kaydırma */
+  font-size:.88rem;
+}
+.lg-table th, .lg-table td{
+  padding:8px 10px; text-align:center;
+  border-bottom:1px solid var(--line-soft);
+  white-space:nowrap;
+}
+.lg-table thead th{
+  font-family:var(--font-pixel); font-size:15px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--muted);
+  background:var(--ink-2);
+  border-bottom:var(--bw-1) solid var(--line);
+  position:sticky; top:0; z-index:1;
+}
+.lg-table tbody tr:nth-child(odd) td{ background:rgba(255,255,255,.018); }
+.lg-table tbody tr:hover td{ background:rgba(47,224,255,.05); }
+.lg-table tbody tr:last-child td{ border-bottom:none; }
+
+/* İLK İKİ SÜTUN SABİT: sıra + takım (position:sticky, soldan) */
+.lg-th-pos, .lg-td-pos{
+  position:sticky; left:0; z-index:2;
+  width:44px; min-width:44px; max-width:44px;
+}
+.lg-th-team, .lg-td-team{
+  position:sticky; left:44px; z-index:2;
+  min-width:170px; max-width:230px;
+  text-align:left;
+}
+/* sabit sütunların zemini OPAK olmalı (alttanaki hücreler görünmesin) */
+.lg-td-pos{ background:var(--ink) !important; }
+.lg-td-team{ background:var(--ink) !important; }
+.lg-table thead .lg-th-pos,
+.lg-table thead .lg-th-team{ background:var(--ink-2) !important; }
+.lg-table tbody tr:nth-child(odd) .lg-td-pos,
+.lg-table tbody tr:nth-child(odd) .lg-td-team{ background:var(--ink-2) !important; }
+.lg-table tbody tr:hover .lg-td-pos,
+.lg-table tbody tr:hover .lg-td-team{ background:var(--card-2) !important; }
+
+/* sıra hücresi: yükselme/düşme göstergesi + numara */
+.lg-td-pos{
+  font-family:var(--font-display); font-size:1rem; letter-spacing:.5px;
+  color:var(--muted);
+}
+.lg-promo{
+  display:inline-block; width:10px; height:10px;
+  margin-right:7px; flex:0 0 auto;
+  border:1px solid rgba(255,255,255,.25);
+}
+
+/* takım hücresi */
+.lg-team{
+  display:inline-flex; align-items:center; gap:var(--sp-2);
+  min-width:0; max-width:100%;
+}
+.lg-team .sp-logo{ width:24px; height:24px; }
+.lg-team b{
+  font-size:.88rem; font-weight:600; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  display:inline-block; vertical-align:middle;
+}
+
+/* sayı sütunları */
+.lg-td-num{
+  font-family:var(--font-display); font-size:.95rem; letter-spacing:.5px;
+  color:var(--text);
+}
+.lg-td-pts{ color:var(--pitch); font-weight:700; }
+.lg-th-pts{ color:var(--pitch) !important; }
+
+/* grup başlığı (birden çok grup varsa: "Grup A") */
+.lg-group-title{
+  margin:var(--sp-3) 0 var(--sp-2);
+  font-family:var(--font-pixel); font-size:16px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--chalk);
+}
+.lg-group-title:first-child{ margin-top:0; }
+
+/* promo açıklama satırı (renkler veriden) */
+.lg-legend{
+  display:flex; flex-wrap:wrap; gap:var(--sp-2);
+  margin-top:var(--sp-2);
+}
+.lg-legend-chip{
+  display:inline-flex; align-items:center; gap:7px;
+  font-family:var(--font-pixel); font-size:14px; letter-spacing:.5px;
+  text-transform:uppercase; color:var(--muted);
+  border:1px solid var(--line); padding:3px 9px;
+}
+
+/* ---------- Lig maçları: tarih grupları ---------- */
+.lg-date-group{ margin-bottom:var(--sp-3); }
+.lg-date-group:last-child{ margin-bottom:0; }
+.lg-date-title{
+  margin:0 0 var(--sp-2);
+  font-family:var(--font-pixel); font-size:15px; letter-spacing:1px;
+  text-transform:uppercase; color:var(--flood);
+  border-bottom:1px dashed var(--line);
+  padding-bottom:4px;
+}
+.lg-match-list{
+  border:var(--bw-1) solid var(--line);
+  background:var(--ink);
+}
+.lg-match-list .sp-row:first-child{ border-top:none; }
+
+/* ---------- Mobil (≤480px): kompakt tablo, yatay kaydırma kutuda ---------- */
+@media (max-width:480px){
+  .lg-head{ padding:var(--sp-2) var(--sp-3); gap:var(--sp-2); }
+  .lg-title{ font-size:1.15rem; }
+  .lg-logo{ width:32px; height:32px; }
+  .lg-table{ min-width:560px; font-size:.8rem; }
+  .lg-table th, .lg-table td{ padding:6px 8px; }
+  .lg-th-team, .lg-td-team{ left:36px; min-width:140px; }
+  .lg-th-pos, .lg-td-pos{ width:36px; min-width:36px; max-width:36px; }
+  .lg-team .sp-logo{ width:20px; height:20px; }
+  .lg-team b{ font-size:.78rem; max-width:120px; }
+  .lg-promo{ width:8px; height:8px; margin-right:5px; }
+}
